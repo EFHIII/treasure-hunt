@@ -1,7 +1,7 @@
 let loaded = 0;
 let toLoad = 0;
 
-getImage('/assets/sprites.png', loadAsset(toLoad++));
+getImage('assets/sprites.png', loadAsset(toLoad++));
 console.log(`${toLoad} asset${toLoad===1?'':'s'} loading...`);
 
 const assetImages = [];
