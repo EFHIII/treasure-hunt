@@ -1,6 +1,7 @@
 #version 300 es
 
 precision mediump float;
+precision mediump int;
 
 uniform vec2 resolution;
 
@@ -15,6 +16,7 @@ out vec4 fragColor;
 #define numTextures 1
 
 uniform sampler2D u_textures[numTextures];
+uniform highp usampler2D u_spriteData;
 
 // Converts a color from linear light gamma to sRGB gamma
 vec3 fromLinear(vec3 linearRGB) {
@@ -36,7 +38,7 @@ vec3 toLinear(vec3 sRGB) {
 
 vec4 drawSprite(vec2 uv, vec2 location, vec2 spriteLocation, vec2 size) {
   vec4 color = vec4(0.0);
-  if (all(lessThan(uv, location + size)) && all(greaterThan(uv, location))) {
+  if(all(lessThan(uv, location + size)) && all(greaterThan(uv, location))) {
     ivec2 texSize = textureSize(u_textures[0], 0);
     vec2 spritePixel = uv - location;
     spritePixel.y = size.y - spritePixel.y;
@@ -47,22 +49,35 @@ vec4 drawSprite(vec2 uv, vec2 location, vec2 spriteLocation, vec2 size) {
 }
 
 vec4 getPixel(in vec2 pixel) {
-  vec4 col = vec4(0.3,0.6,0.9,1.0);
+  vec4 col = vec4(0.4,0.3,0.2,1.0);
 
-  for(float y = 0.0; y < 3.0; y++) {
-    for(float x = 0.0; x < 4.0; x++) {
-      vec4 txt = drawSprite(pixel, vec2(-100.0+50.0*x,70.0-65.0*y), vec2(0.0, 24.0), vec2(45.0, 60.0));
-      if(txt.a > 0.0) col = txt;
+  const int size = 1024;
+
+  int atI = 0;
+
+  while(atI < size) {
+    uvec4 colv = texelFetch(u_spriteData, ivec2(atI, 0), 0);
+
+    uint sprite = colv.r + (colv.g << 8);
+
+    if(sprite-- < 1u) {
+      break;
     }
 
-    vec2 uv = pixel;
-    vec2 location = vec2(-100.0,70.0);
-    vec2 spriteLocation = vec2(0.0, 24.0);
-    vec2 size = vec2(45.0, 60);
+    //vec4 txt2 = drawSprite(pixel, vec2(float(colv.b)-240.0-127.0, 0.0), vec2(45.0, 24.0), vec2(45.0, 60.0));
+    //if(txt2.a > 0.0) col = txt2;
 
-    if(all(lessThan(uv, location + size)) && all(greaterThanEqual(uv, location))) {
-      //col = vec4(0.0);
-    }
+    uvec2 uv = uvec2(colv.b + (colv.a << 8), 0);
+    atI++;
+
+    colv = texelFetch(u_spriteData, ivec2(atI, 0), 0);
+
+    uv.y += colv.r + (colv.g << 8);
+
+    vec4 txt = drawSprite(pixel, vec2(uv) - vec2(240.0, 135.0) - vec2(1024.0), vec2(45.0 * float(sprite), 24.0), vec2(45.0, 60.0));
+    if(txt.a > 0.0) col = txt;
+
+    atI++;
   }
 
   return vec4(toLinear(col.rgb), col.a);
@@ -144,5 +159,5 @@ void main() {
   //float v = st.x/10.0 + 0.15;
   //vec3(v, v, v);
 
-  fragColor = vec4((ans), 1.0);
+  fragColor = vec4(fromLinear(ans), 1.0);
 }

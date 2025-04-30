@@ -2,7 +2,7 @@ let loaded = 0;
 let toLoad = 0;
 
 getImage('/assets/sprites.png', loadAsset(toLoad++));
-console.log(`${toLoad} assets loading...`);
+console.log(`${toLoad} asset${toLoad===1?'':'s'} loading...`);
 
 const assetImages = [];
 
@@ -25,20 +25,16 @@ function loadAssets() {
   if(loaded < toLoad) return;
   loaded = -1;
 
-  texture_location = gl.getUniformLocation(program, "u_textures");
-
-  gl.useProgram(program);
-
   gl.enableVertexAttribArray(pos_attr_location);
   gl.bindBuffer(gl.ARRAY_BUFFER, pos_buffer);
   gl.vertexAttribPointer(pos_attr_location, 2, gl.FLOAT, false, 0, 0);
 
-  gl.uniform1iv(texture_location, [0]);
+  gl.uniform1iv(texture_location, [1]);
 
   //initShader();
 
   for(let i = 0; i < toLoad; i++) {
-    gl.activeTexture(gl.TEXTURE0 + i);
+    gl.activeTexture(gl.TEXTURE0 + i + 1);
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
 

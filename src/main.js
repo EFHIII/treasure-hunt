@@ -14,7 +14,13 @@ renderThread.postMessage({
 }, [offscreenCanvas]);
 
 renderThread.onmessage = msg => {
+  switch(msg.data.type) {
+    case 'cursor':
+      document.body.style.cursor = msg.data.style;
+      break;
+  }
 
+/*
   console.log(msg.data.hasOwnProperty('width'), msg.data.width);
 
   if(msg.data.hasOwnProperty('width')) {
@@ -40,6 +46,7 @@ renderThread.onmessage = msg => {
 
   console.log(`Render Thread:`);
   console.log(msg.data);
+  */
 };
 
 //event listeners
@@ -48,5 +55,20 @@ window.onresize = () => {
     type: 'resize',
     width: window.innerWidth,
     height: window.innerHeight
+  });
+}
+
+
+onmousemove = e => {
+  renderThread.postMessage({
+    type: 'mouseMove',
+    x: e.x,
+    y: e.y
+  });
+}
+
+onclick = e => {
+  renderThread.postMessage({
+    type: 'click'
   });
 }
