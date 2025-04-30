@@ -146,6 +146,10 @@ function activateCard(index, type) {
     case BUCKET:
       hand = [];
       break;
+    case CHEST:
+      // WIN condition
+      board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
+      break;
     default:
       console.error(`card type ${type} not supported to activate`);
   }
@@ -179,6 +183,11 @@ function chooseChoice(choice, type) {
     case SHOVEL:
     case TROWEL:
       hand.push(choose.choices[choice]);
+
+      if(choose.choices[choice] === CHEST) {
+        // WIN condition
+        board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
+      }
       break;
     default:
       console.error(`card type ${placing} not supported to choose`);
