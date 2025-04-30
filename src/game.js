@@ -222,7 +222,7 @@ function runGame() {
       let btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
       drawSprite(board[y][x][0], left + (tw + gap) * x, 199 + stackSize - (th + gap) * y);
       if(btn) {
-        drawSprite(board[y][x][0], left + (tw + gap) * x, 199 + stackSize - (th + gap) * y + 2;
+        drawSprite(board[y][x][0], left + (tw + gap) * x, 199 + stackSize - (th + gap) * y + 2);
       }
       if(btn) cursorType = 'pointer';
 
