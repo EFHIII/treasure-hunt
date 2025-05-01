@@ -1,5 +1,6 @@
 const layers = 8;
 const maxHand = 8;
+const TOP_TOOLS = 2;
 
 // sand, rock, mine, shovel, trawel, bomb, bucket, crab
 const deckNums = [55, 16, 0, 6, 10, 2, 2, 4];
@@ -57,11 +58,54 @@ function shuffle(array) {
   }
 }
 
+function isTool(id) {
+  switch (id) {
+    case SHOVEL:
+    case TROWEL:
+    case BOMB:
+    case BUCKET:
+      return true;
+      break;
+    default:
+      return false;
+  }
+}
+
+function hasConsecutiveEmpty(cards, chest) {
+  let lastEmpty = false;
+  let at = 0;
+  for(let l = 0; l < layers; l++) {
+    let empty = true;
+    for(let i = 0; i < gridWidth * gridHeight; i++) {
+      at++;
+      if(at === chest) at++;
+
+      if(isTool(cards[at])) empty = false;
+    }
+
+    if(empty && lastEmpty) return true;
+    lastEmpty = empty;
+  }
+  return false;
+}
+
+function hasTopTools(cards, n) {
+  let tt = 0;
+  let len = cards.length;
+  for(let at = 1; at <= gridWidth * gridHeight; at++) {
+    if(isTool(cards[len - at])) tt++;
+  }
+  return tt >= n;
+}
+
 function setupGame() {
   let cards = deck.slice();
-  shuffle(cards);
-
-  let chest = Math.random() * cards.length / 4;
+  let fair = false, chest;
+  while(!fair) {
+    shuffle(cards);
+    chest = Math.random() * cards.length / 4;
+    fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
+  }
 
   let at = 0;
 
