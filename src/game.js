@@ -264,6 +264,7 @@ function runGame() {
       drawSprite(choose.choices[i], x, 100 + (btn ? 2 : 0));
       if(btn && clicked) {
         chooseChoice(i, choose.type);
+        clicked = false;
         break;
       }
     }
@@ -279,6 +280,7 @@ function runGame() {
         drawSprite(BOTTOM, left + (tw + gap) * x, 199 - (th + gap) * y);
         if(btn && clicked && placing) {
           placeCard(x, y, hand[placing]);
+          clicked = false;
         }
         continue;
       }
