@@ -77,6 +77,18 @@ vec4 getPixel(in vec2 pixel) {
     vec4 txt = drawSprite(pixel, vec2(uv) - vec2(240.0, 135.0) - vec2(1024.0), vec2(45.0 * float(sprite), 24.0), vec2(45.0, 60.0));
     if(txt.a > 0.0) {
       col = txt;
+      if(colv.b > 0u) {
+        if(colv.b < 11u) {
+          vec4 txt = drawSprite(pixel, vec2(uv) - vec2(240.0, 135.0) - vec2(1024.0), vec2(7.0 * float(colv.b) + 317.0, 0.0), vec2(7.0, 10.0));
+          if(txt.a > 0.0) col = txt;
+        }
+        else {
+          vec4 txt = drawSprite(pixel, vec2(uv) - vec2(240.0, 135.0) - vec2(1024.0), vec2(7.0 * float((colv.b)/10u) + 324.0, 0.0), vec2(7.0, 10.0));
+          if(txt.a > 0.0) col = txt;
+          txt = drawSprite(pixel, vec2(uv) - vec2(233.0, 135.0) - vec2(1024.0), vec2(7.0 * float((colv.b) % 10u) + 317.0, 0.0), vec2(7.0, 10.0));
+          if(txt.a > 0.0) col = txt;
+        }
+      }
       if(colv.a < 1u) {
         col *= 0.8;
       }
