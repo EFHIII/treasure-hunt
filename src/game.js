@@ -141,6 +141,7 @@ function activateCard(index, type) {
     case SHOVEL:
     case TROWEL:
     case BOMB:
+    case CRAB:
       placing = index;
       break;
     case BUCKET:
@@ -160,6 +161,7 @@ function placeCard(x, y, type) {
     case SAND:
       return;
     case ROCK:
+    case CRAB:
       board[y][x].unshift(type);
       break;
     case SHOVEL:
@@ -172,7 +174,7 @@ function placeCard(x, y, type) {
       forAllNeighbors(x, y, b => b.shift());
       break;
     default:
-      console.error(`card type ${placing} not supported to place`);
+      console.error(`card type ${type} not supported to place`);
   }
   hand.splice(placing, 1);
   placing = false;
