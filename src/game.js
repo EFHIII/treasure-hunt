@@ -241,9 +241,12 @@ function runGame() {
 
       drawSprite(BACK, left + (tw + gap) * x, 199 - (th + gap) * y);
 
-      drawSprite(btn && board[y][x].length === 1 ? BOTTOM : board[y][x][0], left + (tw + gap) * x, 198 + stackSize - (btn ? 1 : 0) - (th + gap) * y);
       if(btn) {
-        drawSprite(board[y][x][0], left + (tw + gap) * x, 199 + stackSize - (th + gap) * y + 2);
+        drawSprite(board[y][x].length === 1 ? BOTTOM : board[y][x][0], left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
+        drawSprite(board[y][x][0], left + (tw + gap) * x, 201 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+      }
+      else {
+        drawSprite(board[y][x][0], left + (tw + gap) * x, 198 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
 
       if(btn && clicked) {

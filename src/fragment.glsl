@@ -75,7 +75,12 @@ vec4 getPixel(in vec2 pixel) {
     uv.y += colv.r + (colv.g << 8);
 
     vec4 txt = drawSprite(pixel, vec2(uv) - vec2(240.0, 135.0) - vec2(1024.0), vec2(45.0 * float(sprite), 24.0), vec2(45.0, 60.0));
-    if(txt.a > 0.0) col = txt;
+    if(txt.a > 0.0) {
+      col = txt;
+      if(colv.a < 1u) {
+        col *= 0.8;
+      }
+    }
 
     atI++;
   }

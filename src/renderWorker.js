@@ -130,7 +130,7 @@ function initShader() {
 let t;
 
 let spriteIndex = 0;
-function drawSprite(sprite, X, Y) {
+function drawSprite(sprite, X, Y, boardHeight = -1, tooLow = false) {
   if(spriteIndex > spriteSlots * 8) {
     console.error(`ran out of sprite slots`);
     return;
@@ -146,8 +146,8 @@ function drawSprite(sprite, X, Y) {
 
   sprites[spriteIndex++] = (y+1024) & 0xFF;
   sprites[spriteIndex++] = ((y+1024) >> 8) & 0xFF;
-  sprites[spriteIndex++] = 0;
-  sprites[spriteIndex++] = 0;
+  sprites[spriteIndex++] = boardHeight + 1;
+  sprites[spriteIndex++] = tooLow ? 0 : 1;
 }
 
 function render(gl) {
@@ -195,14 +195,6 @@ function canvasLoop() {
 
   requestAnimationFrame(canvasLoop);
 }
-
-/*
-TODO: delete?
-let channel = new MessageChannel();
-channel.port1.onmessage = function() {
-  canvasLoop();
-}
-*/
 
 onmessage = function(msg) {
   const data = msg.data;
