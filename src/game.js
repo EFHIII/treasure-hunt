@@ -15,6 +15,7 @@ const BUCKET = 6;
 const CRAB = 7;
 const CHEST = 8;
 const BACK = 9;
+const BOTTOM = 10;
 
 const gridWidth = 4;
 const gridHeight = 3;
@@ -24,7 +25,7 @@ const mid = 240; // half screen width
 const tw = 45; // texture width
 const th = 60; // texture height
 
-const gap = 5; // grid gap
+const gap = 0; // grid gap
 
 const left = mid - (tw * gridWidth + gap * gridHeight) / 2; // left index of grid
 
@@ -165,9 +166,11 @@ function placeCard(x, y, type) {
       board[y][x].unshift(type);
       break;
     case SHOVEL:
+      if(board[y][x].length === 0) return;
       choose = {type, x, y, choices: board[y][x].splice(0, 4)};
       break;
     case TROWEL:
+      if(board[y][x].length === 0) return;
       choose = {type, x, y, choices: board[y][x].splice(0, 2)};
       break;
     case BOMB:
@@ -225,17 +228,23 @@ function runGame() {
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
       let stackSize = board[y][x].length;
-      if(stackSize === 0) continue;
+      let btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
+      if(btn) cursorType = 'pointer';
+
+      if(stackSize === 0) {
+        drawSprite(BOTTOM, left + (tw + gap) * x, 199 - (th + gap) * y);
+        if(btn && clicked && placing) {
+          placeCard(x, y, hand[placing]);
+        }
+        continue;
+      }
 
       drawSprite(BACK, left + (tw + gap) * x, 199 - (th + gap) * y);
 
-
-      let btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
-      drawSprite(board[y][x][0], left + (tw + gap) * x, 199 + stackSize - (th + gap) * y);
+      drawSprite(btn && board[y][x].length === 1 ? BOTTOM : board[y][x][0], left + (tw + gap) * x, 198 + stackSize - (btn ? 1 : 0) - (th + gap) * y);
       if(btn) {
         drawSprite(board[y][x][0], left + (tw + gap) * x, 199 + stackSize - (th + gap) * y + 2);
       }
-      if(btn) cursorType = 'pointer';
 
       if(btn && clicked) {
         if(placing === false) {
