@@ -1,7 +1,3 @@
-const LED1 = 0.120286;
-const LED2 = 0.329268;
-const LED3 = 1;
-
 let offscreenCanvas = document.getElementById('canvas');
 offscreenCanvas.width = window.innerWidth;
 offscreenCanvas.height = window.innerHeight;
@@ -19,34 +15,6 @@ renderThread.onmessage = msg => {
       document.body.style.cursor = msg.data.style;
       break;
   }
-
-/*
-  console.log(msg.data.hasOwnProperty('width'), msg.data.width);
-
-  if(msg.data.hasOwnProperty('width')) {
-    const {width, height, data, name} = msg.data;
-    const imageData = new ImageData(new Uint8ClampedArray(data), width, height);
-
-    const can = document.createElement('canvas');
-    can.width = width;
-    can.height = height;
-    const ctx = can.getContext('2d');
-    ctx.putImageData(imageData, 0, 0);
-    can.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name+'.png';
-      a.click();
-
-      URL.revokeObjectURL(url)
-    }, 'image/png');
-    return;
-  }
-
-  console.log(`Render Thread:`);
-  console.log(msg.data);
-  */
 };
 
 //event listeners

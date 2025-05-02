@@ -4,53 +4,79 @@ importScripts('assets.js');
 importScripts('game.js');
 
 const spriteSlots = 1024;
-const sprites = new Uint8Array(spriteSlots * 8);
+const spriteDataLength = 7;
+const sprites = new Float32Array(spriteSlots * spriteDataLength);
+let spriteCount = 0;
 
-let canvas, gl, program, ready = false;
+const sheetWidth = 495;
+const sheetHeight = 84;
+
+const vWidth = 480;
+const vHeight = 270;
+
+const backgroundColor = [0.4, 0.3, 0.2, 1];
+
+let canvas, gl, program, programCRT, ready = false;
 let unit;
 
 let frag = '';
 let vert = '';
+let crtFrag = '';
+let crtVert = '';
 
-let shader = false;
+let shader = true;
 
-let spriteTexture, sprite_location;
+let spriteTexture;
+let spriteVAO, crtVAO, instanceBuffer;
 
-let vertex, fragment, pos_attr_location, res_location, time_location, shader_location, sz_location, texture_location, pos_buffer;
+let time_location, shader_location, sz_location;
 
-let colorIL;
+let crtRenderTexture, crtFramebuffer, fsQuadVBO;
 
-const LED1 = 0.120286;
-const LED2 = 0.329268;
-const LED3 = 1;
+const quadVerts = new Float32Array([
+    // a_texCoord  // these map the sprite size
+     0, 0,
+     1, 0,
+     1, 1,
+     0, 0,
+     1, 1,
+     0, 1,
+]);
 
-getFile('vertex.glsl', r => {
+const fullscreenVerts = new Float32Array([
+  -1, -1,
+   3, -1,
+  -1,  3
+]);
+
+getFile('pixel_vertex.glsl', r => {
   vert = r;
   initShader();
 });
 
-getFile('fragment.glsl', r => {
+getFile('pixel_fragment.glsl', r => {
   frag = r;
   initShader();
 });
 
-function initShader() {
-  if (frag === '' || vert === '') return;
-  if(loaded < toLoad) return;
+getFile('crt_vertex.glsl', r => {
+  crtVert = r;
+  initShader();
+});
 
-  // set clear color of webgl, params: (r, g, b, a)
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+getFile('crt_fragment.glsl', r => {
+  crtFrag = r;
+  initShader();
+});
 
-  // clear
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+function initShaderCode(program, vertexCode, fragmentCode) {
+  // create vertex and fragment shaders
+  const vertex = gl.createShader(gl.VERTEX_SHADER);
+  const fragment = gl.createShader(gl.FRAGMENT_SHADER);
 
-  // create vertex and fragment shader
-  vertex = gl.createShader(gl.VERTEX_SHADER);
-  fragment = gl.createShader(gl.FRAGMENT_SHADER);
-
-  // set shader source (shader to assign to, source code to assign)
-  gl.shaderSource(vertex, vert);
-  gl.shaderSource(fragment, frag);
+  // set shader source
+  gl.shaderSource(vertex, vertexCode);
+  gl.shaderSource(fragment, fragmentCode);
 
   // compile shaders
   gl.compileShader(vertex);
@@ -66,7 +92,6 @@ function initShader() {
     return;
   }
 
-  // create program and combine shaders, then link program
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
   gl.linkProgram(program);
@@ -76,107 +101,217 @@ function initShader() {
     console.error("error linking program", gl.getProgramInfoLog(program));
     return;
   }
+}
 
-  // validate program; remove from final builds
-  gl.validateProgram(program);
-  if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
-    console.error("error validating program", gl.getProgramInfoLog(fragment));
-    return;
-  }
+function initShader() {
+  if (frag === '' || vert === '' || crtFrag === '' || crtVert === '') return;
+  if(loaded < 1) return;
 
-  // attribute location(s)
-  pos_attr_location = gl.getAttribLocation(program, "a_position");
+  // set background color
+  gl.clearColor(...backgroundColor);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  // uniform location(s)
-  res_location = gl.getUniformLocation(program, "resolution");
-  time_location = gl.getUniformLocation(program, "time");
-  sz_location = gl.getUniformLocation(program, "sz");
-  shader_location = gl.getUniformLocation(program, "shader");
+  // clear
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  texture_location = gl.getUniformLocation(program, "u_textures");
-  sprite_location = gl.getUniformLocation(program, "u_spriteData");
+  initShaderCode(program, vert, frag);
 
-  // handle position buffer
-  pos_buffer = gl.createBuffer();
+  initShaderCode(programCRT, crtVert, crtFrag);
+
+  // uniform locations
+  const texCoordLoc = gl.getAttribLocation(program, "a_texCoord");
+  const offsetLoc = gl.getAttribLocation(program, "a_offset");
+  const sizeLoc = gl.getAttribLocation(program, "a_size");
+  const sheetOffsetLoc = gl.getAttribLocation(program, "a_sheetOffset");
+  const darkenLoc = gl.getAttribLocation(program, "a_darken");
+
+  spriteVAO = gl.createVertexArray();
+  gl.bindVertexArray(spriteVAO);
+
+  const quadBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(texCoordLoc);
+  gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
+
+  instanceBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, sprites, gl.DYNAMIC_DRAW);
+
+  const stride = spriteDataLength * Float32Array.BYTES_PER_ELEMENT;
+  // a_offset (vec2)
+  gl.enableVertexAttribArray(offsetLoc);
+  gl.vertexAttribPointer(offsetLoc, 2, gl.FLOAT, false, stride, 0);
+  gl.vertexAttribDivisor(offsetLoc, 1);
+  // a_size (vec2)
+  gl.enableVertexAttribArray(sizeLoc);
+  gl.vertexAttribPointer(sizeLoc, 2, gl.FLOAT, false, stride, 2 * Float32Array.BYTES_PER_ELEMENT);
+  gl.vertexAttribDivisor(sizeLoc, 1);
+  // a_sheetOffset (vec2)
+  gl.enableVertexAttribArray(sheetOffsetLoc);
+  gl.vertexAttribPointer(sheetOffsetLoc, 2, gl.FLOAT, false, stride, 4 * Float32Array.BYTES_PER_ELEMENT);
+  gl.vertexAttribDivisor(sheetOffsetLoc, 1);
+  // a_darken (float)
+  gl.enableVertexAttribArray(darkenLoc);
+  gl.vertexAttribPointer(darkenLoc, 1, gl.FLOAT, false, stride, 6 * Float32Array.BYTES_PER_ELEMENT);
+  gl.vertexAttribDivisor(darkenLoc, 1);
+
+  crtRenderTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, crtRenderTexture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 480, 270, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  // Create framebuffer and attach texture
+  crtFramebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, crtFramebuffer);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, crtRenderTexture, 0);
+
+  // Unbind
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
 
   gl.useProgram(program);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, pos_buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  const u_resolutionLoc = gl.getUniformLocation(program, "u_resolution");
 
-  // handle sprite texture
-  spriteTexture = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, spriteTexture);
-  gl.uniform1i(sprite_location, 0);
+  time_location = gl.getUniformLocation(program, "time");
+  sz_location = gl.getUniformLocation(program, "sz");
+  shader_location = gl.getUniformLocation(program, "shader");
 
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8UI, spriteSlots * 2/*width*/, 1/*height*/, 0, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, sprites);
+  const texLoc = gl.getUniformLocation(program, "u_texture");
+  gl.uniform1i(texLoc, 0);
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform2f(u_resolutionLoc, vWidth, vHeight);
 
-  ready = true;
+  gl.bindVertexArray(spriteVAO);
 
   loadAssets();
 
-  gl.activeTexture(gl.TEXTURE0);
+  crtVAO = gl.createVertexArray();
+  gl.bindVertexArray(crtVAO);
+
+  fsQuadVBO = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, fsQuadVBO);
+  gl.bufferData(gl.ARRAY_BUFFER, fullscreenVerts, gl.STATIC_DRAW);
+
+  const pos = gl.getAttribLocation(programCRT, "a_position");
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
 
   render(gl);
+
+  ready = true;
 }
 
 let t;
 
-let spriteIndex = 0;
-function drawSprite(sprite, X, Y, boardHeight = -1, tooLow = false) {
-  if(spriteIndex > spriteSlots * 8) {
+function drawDigit(digit, x, y) {
+  if (spriteCount >= spriteSlots) {
     console.error(`ran out of sprite slots`);
     return;
   }
 
-  const x = X;// - 240;
-  const y = Y;// - 135;
+  const i = spriteCount * spriteDataLength;
+  sprites[i + 0] = x;
+  sprites[i + 1] = y;
+  sprites[i + 2] = 7;// width
+  sprites[i + 3] = 10;// height
+  sprites[i + 4] = digit * 7 + 317; // sheet X
+  sprites[i + 5] = 10; // sheet Y
+  sprites[i + 6] = 0;
 
-  sprites[spriteIndex++] = (sprite+1) & 0xFF;
-  sprites[spriteIndex++] = ((sprite+1) >> 8) & 0xFF;
-  sprites[spriteIndex++] = (x+1024) & 0xFF;
-  sprites[spriteIndex++] = ((x+1024) >> 8) & 0xFF;
-
-  sprites[spriteIndex++] = (y+1024) & 0xFF;
-  sprites[spriteIndex++] = ((y+1024) >> 8) & 0xFF;
-  sprites[spriteIndex++] = boardHeight + 1;
-  sprites[spriteIndex++] = tooLow ? 0 : 1;
+  spriteCount++;
 }
 
-function render(gl) {
-  //console.log(1000/(performance.now() - t));
-  t = performance.now();
+function drawSprite(spriteIndex, x, y, boardHeight = -1, tooLow = false) {
+  if (spriteCount >= spriteSlots) {
+    console.error(`ran out of sprite slots`);
+    return;
+  }
 
-  drawSprite(-1, 0, 0);
+  const i = spriteCount * spriteDataLength;
+  sprites[i + 0] = Math.round(x);
+  sprites[i + 1] = Math.round(y);
+  sprites[i + 2] = 45;// width
+  sprites[i + 3] = 60;// height
+  sprites[i + 4] = spriteIndex * 45; // sheet X
+  sprites[i + 5] = 0; // sheet Y
+  sprites[i + 6] = tooLow ? 1 : 0;
 
-  // set viewport size
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  spriteCount++;
 
-  // set uniform values
+  if(boardHeight >= 10) {
+    drawDigit(Math.floor((boardHeight+11) / 10), x+1, y+1);
+    drawDigit((boardHeight+1) % 10, x+8, y+1);
+  }
+  else if(boardHeight > 0) {
+    drawDigit(boardHeight + 1, x+1, y+1);
+  }
+}
+
+function useCRTShader() {
+  gl.useProgram(programCRT);
+
+  // Bind textures
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, crtRenderTexture);
+  gl.uniform1i(gl.getUniformLocation(programCRT, "u_scene"), 0);
+
+  gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, spriteTexture);
-  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, spriteSlots * 2, 1, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, sprites);
+  gl.uniform1i(gl.getUniformLocation(programCRT, "u_texture"), 1);
 
-  gl.uniform2f(res_location, gl.canvas.width, gl.canvas.height);
-  gl.uniform1f(time_location, performance.now());
+  // Set uniforms
+  gl.uniform2f(gl.getUniformLocation(programCRT, "u_resolution"), gl.canvas.width, gl.canvas.height);
 
   unit = gl.canvas.width;
   if(gl.canvas.height * 16/9 < unit) unit = gl.canvas.height * 16/9;
 
-  let sz = Math.max(1, Math.min(8, Math.floor(unit/480)));
+  let sz = Math.max(1, Math.min(8, Math.floor(unit/vWidth)));
 
-  gl.uniform1f(sz_location, sz);
+  gl.uniform1i(gl.getUniformLocation(programCRT, "sz"), sz);
 
-  gl.uniform1i(sz_location, shader);
+  gl.uniform1i(gl.getUniformLocation(programCRT, "shader"), shader);
+}
+
+function updateSpriteBuffer() {
+  gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, sprites.subarray(0, spriteCount * spriteDataLength));
+}
+
+function render(gl) {
+  t = performance.now();
+  gl.useProgram(program);
+
+  // redner sprites
+  gl.bindFramebuffer(gl.FRAMEBUFFER, crtFramebuffer);
+  gl.viewport(0, 0, vWidth, vHeight);
+
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  updateSpriteBuffer();
+
+  gl.uniform1f(time_location, performance.now());
+
+  // bind VAO
+  gl.bindVertexArray(spriteVAO);
 
   // render
-  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, spriteTexture);
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, spriteCount);
+
+  // apply CRT shader
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  useCRTShader();
+
+  gl.bindVertexArray(crtVAO);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 
 function sleep(ms) {
@@ -189,9 +324,9 @@ function canvasLoop() {
   runGame();
 
   if(ready) render(gl);
-  else if(loaded >= toLoad) initShader();
+  else if(loaded >= 1) initShader();
 
-  spriteIndex = 0;
+  spriteCount = 0;
 
   requestAnimationFrame(canvasLoop);
 }
@@ -202,12 +337,12 @@ onmessage = function(msg) {
   switch(data.type) {
     case 'mouseMove':
       if(canvas.width > canvas.height * 16/9) {
-        mouse.x = (data.x - canvas.width/2 + unit/2) / unit * 480;
-        mouse.y = 270 - data.y / (unit*9/16) * 270;
+        mouse.x = (data.x - canvas.width/2 + unit/2) / unit * vWidth;
+        mouse.y = vHeight - data.y / (unit*9/16) * vHeight;
       }
       else {
-        mouse.x = data.x / unit * 480;
-        mouse.y = 270 - (data.y - canvas.height/2 + unit*9/32) / (unit*9/16) * 270;
+        mouse.x = data.x / unit * vWidth;
+        mouse.y = vHeight - (data.y - canvas.height/2 + unit*9/32) / (unit*9/16) * vHeight;
       }
       break;
     case 'click':
@@ -219,6 +354,8 @@ onmessage = function(msg) {
     gl = canvas.getContext('webgl2');
 
     program = gl.createProgram();
+
+    programCRT = gl.createProgram();
 
     canvasLoop();
     break;
