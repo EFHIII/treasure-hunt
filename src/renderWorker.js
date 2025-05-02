@@ -17,7 +17,7 @@ const vHeight = 270;
 const backgroundColor = [0.4, 0.3, 0.2, 1];
 
 let canvas, gl, program, programCRT, ready = false;
-let unit;
+let unit, sz;
 
 let frag = '';
 let vert = '';
@@ -269,7 +269,7 @@ function useCRTShader() {
   unit = gl.canvas.width;
   if(gl.canvas.height * 16/9 < unit) unit = gl.canvas.height * 16/9;
 
-  let sz = Math.max(1, Math.min(8, Math.floor(unit/vWidth)));
+  sz = Math.max(1, Math.min(8, Math.floor(unit/vWidth)));
 
   gl.uniform1i(gl.getUniformLocation(programCRT, "sz"), sz);
 
@@ -336,7 +336,11 @@ onmessage = function(msg) {
 
   switch(data.type) {
     case 'mouseMove':
-      if(canvas.width > canvas.height * 16/9) {
+      if(shader) {
+        mouse.x =  data.x / sz - canvas.width  / 2 / sz + vWidth  / 2;
+        mouse.y = -data.y / sz + canvas.height / 2 / sz + vHeight / 2;
+      }
+      else if(canvas.width > canvas.height * 16/9) {
         mouse.x = (data.x - canvas.width/2 + unit/2) / unit * vWidth;
         mouse.y = vHeight - data.y / (unit*9/16) * vHeight;
       }
