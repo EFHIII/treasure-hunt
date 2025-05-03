@@ -190,7 +190,7 @@ function checkNeighbors(x, y) {
 let pushing = false;
 
 function pickupCard(x, y, type) {
-  if(hand.length >= maxHand || checkNeighbors(x, y)) return;
+  if((hand.length >= maxHand && type !== BOULDER) || checkNeighbors(x, y)) return;
   switch(type) {
     case CRAB: break;
     case BOULDER:
@@ -681,7 +681,7 @@ function runGame() {
     if(treasures < currentLevel + 1) {
       won = false;
     }
-    
+
     if(won) winScreen();
   }
 
