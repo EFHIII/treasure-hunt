@@ -382,13 +382,38 @@ function loseScreenB() {
 
 function runGame() {
   cursorType = 'default';
+
+  generalSprite(453, 245, -23, 23, 23, 23);
+
+  let btn = button(453, 245, 23, 23);
+
+  if(btn) {
+    cursorType = 'pointer';
+    if(clicked) {
+      setupGame();
+      clicked = false;
+    }
+  }
+
+  generalSprite(3, 245, -99, 23, 23, 23);
+
+  btn = button(3, 245, 23, 23);
+
+  if(btn) {
+    cursorType = 'pointer';
+    if(clicked) {
+      shader = !shader;
+      clicked = false;
+    }
+  }
+
   if(choose) {
     hint(choose.type);
 
     let len = choose.choices.length;
     for(let i = 0; i < len; i++) {
       let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
-      let btn = button(x, 100, tw, th);
+      btn = button(x, 100, tw, th);
       if(btn) {
         cursorType = 'pointer';
         hint(choose.choices[i]);
@@ -427,7 +452,7 @@ function runGame() {
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
       let stackSize = board[y][x].length;
-      let btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
+      btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
       if(btn) {
         cursorType = 'pointer';
 
@@ -468,7 +493,7 @@ function runGame() {
   for(let c = 0; c < hand.length; c++) {
     let x = c * (tw + gap) + mid - (tw * hand.length + gap * (hand.length - 1)) / 2;
 
-    let btn = button(x, 5, tw, th);
+    btn = button(x, 5, tw, th);
 
     if(btn) {
       cursorType = 'pointer';
