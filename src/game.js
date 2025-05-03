@@ -1,9 +1,13 @@
-const layers = 8;
+let layers = 8;
 const maxHand = 8;
 const TOP_TOOLS = 2;
 
-// sand, rock, mine, shovel, trawel, bomb, bucket, crab
-const deckNums = [55, 16, 0, 6, 10, 2, 2, 4];
+let currentLevel = 1;
+
+const deckNums = [
+  [55, 16, 0, 6, 10, 2, 2, 4],
+  [62, 18, 0, 8, 12, 4, 4, 14, 1, 6, 6, 2, 6]
+];
 
 // chest sprite indicies
 const SAND = 0;
@@ -35,7 +39,7 @@ const gap = 0; // grid gap
 
 const left = mid - (tw * gridWidth + gap * gridHeight) / 2; // left index of grid
 
-const deck = [];
+let deck = [];
 
 let board = [];
 let hand = [];
@@ -48,10 +52,6 @@ let clicked = false;
 
 let won = false;
 let discardedChest = false;
-
-for(let i = 0; i < deckNums.length; i++) {
-  deck.push(...new Array(deckNums[i]).fill(i));
-}
 
 function shuffle(array) {
   let currentIndex = array.length;
@@ -72,6 +72,8 @@ function isTool(id) {
     case TROWEL:
     case BOMB:
     case BUCKET:
+    case DETECTOR:
+    case CHERRY:
       return true;
       break;
     default:
@@ -107,7 +109,20 @@ function hasTopTools(cards, n) {
 }
 
 function setupGame() {
+  deck = [];
+
+  for(let i = 0; i < deckNums[currentLevel].length; i++) {
+    deck.push(...new Array(deckNums[currentLevel][i]).fill(i));
+  }
+
+  layers = (deck.length + 1) / gridWidth / gridHeight;
+
   let cards = deck.slice();
+
+  if(cards.length !== layers * gridWidth * gridHeight - 1) {
+    console.log(`error: only ${cards.length} of ${layers * gridWidth * gridHeight-1} cards`);
+  }
+
   let fair = false, chest;
   while(!fair) {
     shuffle(cards);
@@ -157,6 +172,8 @@ function forAllNeighbors(x, y, fn) {
 }
 
 function checkNeighbors(x, y) {
+  if(pushing) return board[y][x].length >= board[pushing.y][pushing.x].length || (pushing.x - x < -1 || pushing.y - y < -1 || pushing.x - x > 1 || pushing.y - y > 1);
+
   let height = board[y][x].length;
 
   for(let X = -1; X < 2; X++) {
@@ -170,14 +187,20 @@ function checkNeighbors(x, y) {
   return false;
 }
 
+let pushing = false;
+
 function pickupCard(x, y, type) {
   if(hand.length >= maxHand || checkNeighbors(x, y)) return;
   switch(type) {
-    case CRAB: return;
+    case CRAB: break;
+    case BOULDER:
+      pushing = {type, x, y};
+      break;
     case CHEST:
       // WIN condition
       won = true;
-      board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
+      hand.push(type);
+      board[y][x].shift();
       break;
     case MINE:
       board[y][x].shift();
@@ -198,15 +221,14 @@ function activateCard(index, type) {
     case TROWEL:
     case BOMB:
     case CRAB:
+    case DETECTOR:
+    case CHERRY:
+    case OCTOPUS:
+    case CHEST:
       placing = index;
       break;
     case BUCKET:
       hand = [];
-      break;
-    case CHEST:
-      // WIN condition
-      won = true;
-      board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
       break;
     default:
       console.error(`card type ${type} not supported to activate`);
@@ -219,6 +241,8 @@ function placeCard(x, y, type) {
       return;
     case ROCK:
     case CRAB:
+    case OCTOPUS:
+    case CHEST:
       board[y][x].unshift(type);
       break;
     case SHOVEL:
@@ -235,6 +259,33 @@ function placeCard(x, y, type) {
         b.shift();
       });
       break;
+    case DETECTOR:
+      if(board[y][x].length === 0) return;
+      let good = 0;
+      let nextGood = 0;
+      for(let i = board[y][x].length - 1; i >= 0; i--) {
+        if(isTool(board[y][x][i])) {
+          good++;
+          nextGood = i;
+        }
+      }
+      info = `\nGood cards in stack\n${good}\n\nNext good card at\n${layers - nextGood}`;
+      break;
+    case CHERRY:
+      forAllNeighbors(x, y, b => {
+        if(b[0] === CHEST) discardedChest = true;
+        b.shift();
+        if(b[0] === CHEST) discardedChest = true;
+        b.shift();
+      });
+      break;
+    case BOULDER:
+      if(!checkNeighbors(x, y)) {
+        board[y][x].unshift(type);
+        board[pushing.y][pushing.x].shift();
+      }
+      pushing = false;
+      return;
     default:
       console.error(`card type ${type} not supported to place`);
   }
@@ -242,16 +293,33 @@ function placeCard(x, y, type) {
   placing = false;
 }
 
+function nearOctopus(x, y) {
+  for(let X = x -1; X < x + 2; X++) {
+    if(X < 0 || X >= gridWidth) continue;
+    for(let Y = y-1; Y < y + 2; Y++) {
+      if(Y < 0 || Y >= gridHeight) continue;
+      if(X === x && Y === y) continue;
+
+      if(board[Y][X].length > 0 && board[Y][X][0] === OCTOPUS) return true;
+    }
+  }
+  return false;
+}
+
 function chooseChoice(choice, type) {
   switch(type) {
     case SHOVEL:
     case TROWEL:
-      hand.push(choose.choices[choice]);
+      if(choose.choices[choice] === BOULDER) {
+        console.log(board[y][x].unshift(BOULDER));
+      }
+      else {
+        hand.push(choose.choices[choice]);
+      }
 
       if(choose.choices[choice] === CHEST) {
         // WIN condition
         won = true;
-        board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
       }
       else {
         for(let i = 0; i < choose.choices.length; i++) {
@@ -303,10 +371,10 @@ const hints = [
     text: `Can't be picked\nup by hand\nDrop by playing it`
   }, {
     name: `Treasure`,
-    text: `Huzzah!\nCollect it to win!`
+    text: `Huzzah!\nCollect ${currentLevel === 0 ? 'it' : 'BOTH\n'} to win!`
   }, {
     name: `Detector`,
-    text: `Tells how many\ngood cards are\nin the stack`
+    text: `Tells how many\ngood cards are\nin the stack\nand how deep\nthe nearest is`
   }, {
     name: `Boulder`,
     text: `Too big to discard\nor pick up\nCan be pushed\nonto lower\nsurrounding stacks`
@@ -315,17 +383,27 @@ const hints = [
     text: `Destorys the top\n2 cards of a\nstack and its 8\nsurrounding stacks`
   }, {
     name: `Octopus`,
-    text: `Inks the surrounding\ncards\nObscures what\nthey are`
+    text: `Inks the\nsurrounding cards\n\nObscures what\nthey are`
   }, {
     name: `Inked`,
     text: `What is this card?`
   }
 ];
 
+function leftHint() {
+  if(won) return;
+
+  generalSprite(8, 100, 0, -60, 132, 118);
+
+  centeredBigText('Hard', 8 + 65, 208);
+
+  centeredText('collect BOTH\ntreasures', 8 + 65, 180);
+}
+
 function hint(type) {
   if(won || type === undefined || type >= hints.length) return;
 
-  generalSprite(335, 100, 0, -60, 132, 118);
+  generalSprite(338, 100, 0, -60, 132, 118);
 
   centeredBigText(hints[type].name, 335 + 65, 208);
 
@@ -352,6 +430,22 @@ function winScreen() {
     centeredText(`Play again`, 174, 80);
 
     centeredText(`Next level`, 174+130, 80);
+  }
+}
+
+let info = false;
+
+function infoScreen() {
+  generalSprite(105, 30, 222, -60, 272, 210);
+
+  centeredBigText(info, 174 + 65, 218);
+
+  cursorType = 'pointer';
+
+  if(clicked) {
+    clicked = false;
+    info = false;
+    won = false;
   }
 }
 
@@ -430,6 +524,10 @@ function runGame() {
     }
   }
 
+  if(currentLevel > 0) {
+    leftHint();
+  }
+
   if(choose) {
     hint(choose.type);
 
@@ -466,6 +564,12 @@ function runGame() {
     cursor(cursorType);
     clicked = false;
   }
+  else if(info) {
+    won = true;
+    infoScreen();
+    cursor(cursorType);
+    clicked = false;
+  }
   else if(won) {
     winScreen();
     cursor(cursorType);
@@ -476,16 +580,25 @@ function runGame() {
     for (let y = 0; y < gridHeight; y++) {
       let stackSize = board[y][x].length;
       btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
+
+      let thisCard = board[y][x][0];
+      if(nearOctopus(x, y)) thisCard = INKED;
+
       if(btn) {
         cursorType = 'pointer';
 
-        hint(board[y][x][0]);
+        hint(thisCard);
       }
+      else if(pushing.x === x && pushing.y === y) hint(thisCard);
 
       if(stackSize === 0) {
         drawSprite(BOTTOM, left + (tw + gap) * x, 199 - (th + gap) * y);
         if(btn && clicked && placing !== false) {
-          placeCard(x, y, hand[placing]);
+          placeCard(x, y, pushing.type);
+          clicked = false;
+        }
+        if(btn && clicked && pushing.x - x >= -1 && pushing.x - x <= 1 && pushing.y - y >= -1 && pushing.y - y <= 1) {
+          placeCard(x, y, pushing.type);
           clicked = false;
         }
         continue;
@@ -493,17 +606,20 @@ function runGame() {
 
       drawSprite(BACK, left + (tw + gap) * x, 199 - (th + gap) * y);
 
-      if(btn && !won) {
-        drawSprite(board[y][x].length === 1 ? BOTTOM : board[y][x][0], left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
-        drawSprite(board[y][x][0], left + (tw + gap) * x, 201 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+      if((btn || (pushing.x === x && pushing.y === y)) && !won) {
+        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
+        drawSprite(thisCard, left + (tw + gap) * x, 201 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else {
-        drawSprite(board[y][x][0], left + (tw + gap) * x, 198 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        drawSprite(thisCard, left + (tw + gap) * x, 198 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
 
       if(btn && clicked) {
-        if(placing === false) {
+        if(placing === false && pushing === false) {
           pickupCard(x, y, board[y][x][0]);
+        }
+        else if(pushing) {
+          placeCard(x, y, pushing.type);
         }
         else {
           placeCard(x, y, hand[placing]);
@@ -516,15 +632,20 @@ function runGame() {
   for(let c = 0; c < hand.length; c++) {
     let x = c * (tw + gap) + mid - (tw * hand.length + gap * (hand.length - 1)) / 2;
 
+    let thisCard = hand[c];
+    if((c > 0 && hand[c-1] === OCTOPUS) || (c < hand.length - 1 && hand[c+1] === OCTOPUS)) {
+      thisCard = INKED;
+    }
+
     btn = button(x, 5, tw, th);
 
     if(btn) {
       cursorType = 'pointer';
 
-      hint(hand[c]);
+      hint(thisCard);
     }
 
-    drawSprite(hand[c], x, 5 + ((btn && !won) || placing === c ? 2 : 0));
+    drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0));
 
     if(btn && clicked && !won) {
       if(placing === c) placing = false;
@@ -534,7 +655,12 @@ function runGame() {
   }
 
   if(placing !== false) {
-    hint(hand[placing]);
+    if((placing > 0 && hand[placing-1] === OCTOPUS) || (placing < hand.length - 1 && hand[placing+1] === OCTOPUS)) {
+      hint(INKED);
+    }
+    else {
+      hint(hand[placing]);
+    }
   }
 
   if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
@@ -542,8 +668,21 @@ function runGame() {
   } else if(discardedChest) {
     loseScreenB();
   }
+  else if(info) {
+    infoScreen();
+    cursor(cursorType);
+    clicked = false;
+  }
   else if(won) {
-    winScreen();
+    let treasures = 0;
+    for(let i = 0; i < hand.length; i++) {
+      if(hand[i] === CHEST) treasures++;
+    }
+    if(treasures < currentLevel + 1) {
+      won = false;
+    }
+    
+    if(won) winScreen();
   }
 
   cursor(cursorType);
