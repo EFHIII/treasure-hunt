@@ -266,5 +266,8 @@ function bigTextWidth(txt) {
 }
 
 function centeredBigText(txt, x, y) {
-  drawBigText(txt, x - Math.floor(bigTextWidth(txt) / 2), y);
+  let txts = txt.split('\n');
+  for(let i = 0; i < txts.length; i++) {
+    drawBigText(txts[i], x - Math.floor(bigTextWidth(txts[i]) / 2), y - 27 * i);
+  }
 }

@@ -41,6 +41,8 @@ let placing = false;
 const mouse = {x: -1, y: -1};
 let clicked = false;
 
+let won = false;
+
 for(let i = 0; i < deckNums.length; i++) {
   deck.push(...new Array(deckNums[i]).fill(i));
 }
@@ -166,6 +168,7 @@ function pickupCard(x, y, type) {
     case CRAB: return;
     case CHEST:
       // WIN condition
+      won = true;
       board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
       break;
     case MINE:
@@ -194,6 +197,7 @@ function activateCard(index, type) {
       break;
     case CHEST:
       // WIN condition
+      won = true;
       board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
       break;
     default:
@@ -235,6 +239,7 @@ function chooseChoice(choice, type) {
 
       if(choose.choices[choice] === CHEST) {
         // WIN condition
+        won = true;
         board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
       }
       break;
@@ -286,7 +291,7 @@ const hints = [
 ];
 
 function hint(type) {
-  if(type === undefined || type >= hints.length) return;
+  if(won || type === undefined || type >= hints.length) return;
 
   generalSprite(335, 100, 0, -60, 132, 118);
 
@@ -294,6 +299,34 @@ function hint(type) {
 
   centeredText(hints[type].text, 335 + 65, 180);
 }
+
+function winScreen() {
+  //generalSprite(174, 100, 0, -60, 132, 118);
+
+  generalSprite(105, 30, 222, -60, 272, 210);
+
+  centeredBigText(`You found\nthe treasure!`, 174 + 65, 218);
+
+  generalSprite(202, 100, 132, -60, 80, 60);
+
+  if(true) {
+    centeredBigText(`Play again`, 174 + 65, 80);
+    cursorType = 'pointer';
+
+    if(clicked) {
+      clicked = false;
+      setupGame();
+      won = false;
+    }
+  }
+  else {
+    centeredText(`Play again`, 174, 80);
+
+    centeredText(`Next level`, 174+130, 80);
+  }
+}
+
+won = true;
 
 function runGame() {
   cursorType = 'default';
@@ -321,6 +354,11 @@ function runGame() {
     clicked = false;
     return;
   }
+  if(won) {
+    winScreen();
+    cursor(cursorType);
+    clicked = false;
+  }
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
       let stackSize = board[y][x].length;
@@ -342,7 +380,7 @@ function runGame() {
 
       drawSprite(BACK, left + (tw + gap) * x, 199 - (th + gap) * y);
 
-      if(btn) {
+      if(btn && !won) {
         drawSprite(board[y][x].length === 1 ? BOTTOM : board[y][x][0], left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
         drawSprite(board[y][x][0], left + (tw + gap) * x, 201 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
@@ -373,9 +411,9 @@ function runGame() {
       hint(hand[c]);
     }
 
-    drawSprite(hand[c], x, 5 + (btn || placing === c ? 2 : 0));
+    drawSprite(hand[c], x, 5 + ((btn && !won) || placing === c ? 2 : 0));
 
-    if(btn && clicked) {
+    if(btn && clicked && !won) {
       if(placing === c) placing = false;
       else activateCard(c, hand[c]);
       clicked = false;
@@ -384,6 +422,10 @@ function runGame() {
 
   if(placing !== false) {
     hint(hand[placing]);
+  }
+
+  if(won) {
+    winScreen();
   }
 
   cursor(cursorType);
