@@ -225,7 +225,10 @@ function placeCard(x, y, type) {
       choose = {type, x, y, choices: board[y][x].splice(0, 2)};
       break;
     case BOMB:
-      forAllNeighbors(x, y, b => b.shift());
+      forAllNeighbors(x, y, b => {
+        if(b[0] === CHEST) discardedChest = true;
+        b.shift();
+      });
       break;
     default:
       console.error(`card type ${type} not supported to place`);
@@ -296,6 +299,21 @@ const hints = [
   }, {
     name: `Treasure`,
     text: `Huzzah!\nCollect it to win!`
+  }, {
+    name: `Detector`,
+    text: `Tells how many\ngood cards are\nin the stack`
+  }, {
+    name: `Boulder`,
+    text: `Too big to discard\nor pick up\nCan be pushed\nonto lower\nsurrounding stacks`
+  }, {
+    name: `Cherry`,
+    text: `Destorys the top\n2 cards of a\nstack and its 8\nsurrounding stacks`
+  }, {
+    name: `Octopus`,
+    text: `Inks the surrounding\ncards\nObscures what\nthey are`
+  }, {
+    name: `Inked`,
+    text: `What is this card?`
   }
 ];
 
@@ -383,7 +401,7 @@ function loseScreenB() {
 function runGame() {
   cursorType = 'default';
 
-  generalSprite(453, 245, -23, 23, 23, 23);
+  generalSprite(453, 245, 495-23, 23, 23, 23);
 
   let btn = button(453, 245, 23, 23);
 
@@ -395,7 +413,7 @@ function runGame() {
     }
   }
 
-  generalSprite(3, 245, -99, 23, 23, 23);
+  generalSprite(3, 245, 495-99, 23, 23, 23);
 
   btn = button(3, 245, 23, 23);
 
