@@ -15,8 +15,13 @@ const BOMB = 5;
 const BUCKET = 6;
 const CRAB = 7;
 const CHEST = 8;
-const BACK = 9;
-const BOTTOM = 10;
+const DETECTOR = 9;
+const BOULDER = 10;
+const CHERRY = 11;
+const OCTOPUS = 12;
+const INKED = 13;
+const BACK = 14;
+const BOTTOM = 15;
 
 const gridWidth = 4;
 const gridHeight = 3;
