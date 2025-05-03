@@ -84,7 +84,7 @@ vec4 renderCRT(vec2 fragCoord) {
   int x = 0;
   int y = 0;
 
-  vec2 main_tx = vec2((poff + 0.5 + mod(onPixel.x , float(sz))) / spritesheetSize.x, (float(sz) + 0.5 + mod(onPixel.y, float(sz))) / spritesheetSize.y);
+  vec2 main_tx = vec2((poff + mod(onPixel.x , float(sz))) / spritesheetSize.x, (float(sz) + 0.5 + mod(onPixel.y, float(sz))) / spritesheetSize.y);
 
   for(int x = -1; x < 2; ++x) {
     for(int y = -1; y < 2; ++y) {

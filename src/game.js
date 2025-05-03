@@ -245,7 +245,7 @@ function chooseChoice(choice, type) {
 }
 
 function button(x, y, w, h) {
-  return mouse.x > x && mouse.x < x+w && mouse.y > y && mouse.y < y + h;
+  return mouse.x >= x && mouse.x < x+w && mouse.y >= y && mouse.y < y + h;
 }
 
 let cursorType = 'default';
@@ -254,13 +254,61 @@ function cursor(style) {
   postMessage({type: 'cursor', style});
 }
 
+const hints = [
+  {
+    name: `Sand`,
+    text: `Useless\nCannot be played`
+  }, {
+    name: 'Rock',
+    text: `Obstacle\nDrop by playing it`
+  }, {
+    name: `Mine`,
+    text: `Does not exist`
+  }, {
+    name: `Shovel`,
+    text: `Dig up 4 cards\nPick one to keep\nDiscard the rest`
+  }, {
+    name: `Trowel`,
+    text: `Dig up 2 cards\nPick one to keep\nDiscard the other`
+  }, {
+    name: `Bomb`,
+    text: `Destroy any\nchosen card\nand the 8\nsurrounding cards`
+  }, {
+    name: `Bucket`,
+    text: `Discard your\nwhole hand`
+  }, {
+    name: `Crab`,
+    text: `Can't be picked\nup by hand\nDrop by playing it`
+  }, {
+    name: `Treasure`,
+    text: `Huzzah!\nCollect it to win!`
+  }
+];
+
+function hint(type) {
+  if(type === undefined || type >= hints.length) return;
+
+  generalSprite(335, 100, 0, -60, 132, 118);
+
+  centeredBigText(hints[type].name, 335 + 65, 208);
+
+  centeredText(hints[type].text, 335 + 65, 180);
+}
+
 function runGame() {
   cursorType = 'default';
   if(choose) {
+    hint(choose.type);
+
     let len = choose.choices.length;
     for(let i = 0; i < len; i++) {
       let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
       let btn = button(x, 100, tw, th);
+      if(btn) {
+        cursorType = 'pointer';
+        hint(choose.choices[i]);
+      }
+
       drawSprite(choose.choices[i], x, 100 + (btn ? 2 : 0));
       if(btn && clicked) {
         chooseChoice(i, choose.type);
@@ -268,17 +316,24 @@ function runGame() {
         break;
       }
     }
+
+    cursor(cursorType);
+    clicked = false;
     return;
   }
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
       let stackSize = board[y][x].length;
       let btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
-      if(btn) cursorType = 'pointer';
+      if(btn) {
+        cursorType = 'pointer';
+
+        hint(board[y][x][0]);
+      }
 
       if(stackSize === 0) {
         drawSprite(BOTTOM, left + (tw + gap) * x, 199 - (th + gap) * y);
-        if(btn && clicked && placing) {
+        if(btn && clicked && placing !== false) {
           placeCard(x, y, hand[placing]);
           clicked = false;
         }
@@ -312,6 +367,12 @@ function runGame() {
 
     let btn = button(x, 5, tw, th);
 
+    if(btn) {
+      cursorType = 'pointer';
+
+      hint(hand[c]);
+    }
+
     drawSprite(hand[c], x, 5 + (btn || placing === c ? 2 : 0));
 
     if(btn && clicked) {
@@ -319,6 +380,10 @@ function runGame() {
       else activateCard(c, hand[c]);
       clicked = false;
     }
+  }
+
+  if(placing !== false) {
+    hint(hand[placing]);
   }
 
   cursor(cursorType);

@@ -2,6 +2,7 @@
 importScripts('ajax.js');
 importScripts('assets.js');
 importScripts('game.js');
+importScripts('sprites.js');
 
 const spriteSlots = 1024;
 const spriteDataLength = 7;
@@ -206,50 +207,6 @@ function initShader() {
 }
 
 let t;
-
-function drawDigit(digit, x, y) {
-  if (spriteCount >= spriteSlots) {
-    console.error(`ran out of sprite slots`);
-    return;
-  }
-
-  const i = spriteCount * spriteDataLength;
-  sprites[i + 0] = x;
-  sprites[i + 1] = y;
-  sprites[i + 2] = 7;// width
-  sprites[i + 3] = 10;// height
-  sprites[i + 4] = digit * 7 + 317; // sheet X
-  sprites[i + 5] = 10; // sheet Y
-  sprites[i + 6] = 0;
-
-  spriteCount++;
-}
-
-function drawSprite(spriteIndex, x, y, boardHeight = -1, tooLow = false) {
-  if (spriteCount >= spriteSlots) {
-    console.error(`ran out of sprite slots`);
-    return;
-  }
-
-  const i = spriteCount * spriteDataLength;
-  sprites[i + 0] = Math.round(x);
-  sprites[i + 1] = Math.round(y);
-  sprites[i + 2] = 45;// width
-  sprites[i + 3] = 60;// height
-  sprites[i + 4] = spriteIndex * 45; // sheet X
-  sprites[i + 5] = 0; // sheet Y
-  sprites[i + 6] = tooLow ? 1 : 0;
-
-  spriteCount++;
-
-  if(boardHeight >= 10) {
-    drawDigit(Math.floor((boardHeight+11) / 10), x+1, y+1);
-    drawDigit((boardHeight+1) % 10, x+8, y+1);
-  }
-  else if(boardHeight > 0) {
-    drawDigit(boardHeight + 1, x+1, y+1);
-  }
-}
 
 function useCRTShader() {
   gl.useProgram(programCRT);
