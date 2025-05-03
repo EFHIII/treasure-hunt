@@ -42,6 +42,7 @@ const mouse = {x: -1, y: -1};
 let clicked = false;
 
 let won = false;
+let discardedChest = false;
 
 for(let i = 0; i < deckNums.length; i++) {
   deck.push(...new Array(deckNums[i]).fill(i));
@@ -134,6 +135,8 @@ function setupGame() {
     }
   }
 
+  won = false;
+  discardedChest = false;
 }
 
 setupGame();
@@ -242,6 +245,12 @@ function chooseChoice(choice, type) {
         won = true;
         board = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]];
       }
+      else {
+        for(let i = 0; i < choose.choices.length; i++) {
+          if(i === choice) continue;
+          if(choose.choices[i] === CHEST) discardedChest = true;
+        }
+      }
       break;
     default:
       console.error(`card type ${placing} not supported to choose`);
@@ -301,8 +310,6 @@ function hint(type) {
 }
 
 function winScreen() {
-  //generalSprite(174, 100, 0, -60, 132, 118);
-
   generalSprite(105, 30, 222, -60, 272, 210);
 
   centeredBigText(`You found\nthe treasure!`, 174 + 65, 218);
@@ -316,7 +323,6 @@ function winScreen() {
     if(clicked) {
       clicked = false;
       setupGame();
-      won = false;
     }
   }
   else {
@@ -326,7 +332,53 @@ function winScreen() {
   }
 }
 
-won = true;
+function loseScreen() {
+  generalSprite(105, 30, 222, -60, 272, 210);
+
+  centeredBigText(`You lose`, 174 + 65, 218);
+  centeredBigText(`hands full of sand`, 174 + 65, 130);
+
+  generalSprite(196, 140, 132, -120, 90, 34);
+
+  if(true) {
+    centeredBigText(`Play again`, 174 + 65, 80);
+    cursorType = 'pointer';
+
+    if(clicked) {
+      clicked = false;
+      setupGame();
+    }
+  }
+  else {
+    centeredText(`Play again`, 174, 80);
+
+    centeredText(`Next level`, 174+130, 80);
+  }
+}
+
+function loseScreenB() {
+  generalSprite(105, 30, 222, -60, 272, 210);
+
+  centeredBigText(`Error 404`, 174 + 65, 218);
+  centeredBigText(`Chest can't be found`, 174 + 65, 115);
+
+  generalSprite(196, 126, 132, -154, 90, 60);
+
+  if(true) {
+    centeredBigText(`Play again`, 174 + 65, 80);
+    cursorType = 'pointer';
+
+    if(clicked) {
+      clicked = false;
+      setupGame();
+    }
+  }
+  else {
+    centeredText(`Play again`, 174, 80);
+
+    centeredText(`Next level`, 174+130, 80);
+  }
+}
 
 function runGame() {
   cursorType = 'default';
@@ -354,11 +406,24 @@ function runGame() {
     clicked = false;
     return;
   }
-  if(won) {
+  if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
+    won = true;
+    loseScreen();
+    cursor(cursorType);
+    clicked = false;
+  }
+  else if(discardedChest) {
+    won = true;
+    loseScreenB();
+    cursor(cursorType);
+    clicked = false;
+  }
+  else if(won) {
     winScreen();
     cursor(cursorType);
     clicked = false;
   }
+
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
       let stackSize = board[y][x].length;
@@ -424,7 +489,12 @@ function runGame() {
     hint(hand[placing]);
   }
 
-  if(won) {
+  if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
+    loseScreen();
+  } else if(discardedChest) {
+    loseScreenB();
+  }
+  else if(won) {
     winScreen();
   }
 
