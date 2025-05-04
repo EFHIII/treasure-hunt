@@ -643,14 +643,28 @@ function titleScreen() {
   }
 }
 
-playingSound = true;
+let playingSound = true;
+let fullscreen = false;
 
 function runGame() {
   cursorType = 'default';
 
+  generalSprite(460, 3, 498 + 17 * (fullscreen?1:0), 20, 17, 20);
+
+  let btn = button(460, 3, 23, 23);
+
+  if(btn) {
+    cursorType = 'pointer';
+    if(clicked) {
+      fullscreen = !fullscreen;
+      postMessage({type:'fullscreen'});
+      clicked = false;
+    }
+  }
+
   generalSprite(3, 245, 495-99, 23, 23, 23);
 
-  let btn = button(3, 245, 23, 23);
+  btn = button(3, 245, 23, 23);
 
   if(btn) {
     cursorType = 'pointer';
