@@ -11,7 +11,7 @@ const challenges = [
     title: 'Normal Mode',
     name: '',
     desc: ``,
-    deck: [55, 16, 0, 6, 10, 2, 2, 4],
+    deck: [55, 16, 0, 6, 10, 2, 2, 4, 0],
     lock: 0
   },
   {
