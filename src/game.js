@@ -2,7 +2,9 @@ let layers = 8;
 const maxHand = 8;
 const TOP_TOOLS = 2;
 
-let currentLevel = 1;
+let currentLevel = 0;
+
+let screen = 0;
 
 const deckNums = [
   [55, 16, 0, 6, 10, 2, 2, 4],
@@ -52,6 +54,7 @@ let clicked = false;
 
 let won = false;
 let discardedChest = false;
+let pushing = false;
 
 function shuffle(array) {
   let currentIndex = array.length;
@@ -157,6 +160,9 @@ function setupGame() {
 
   won = false;
   discardedChest = false;
+  choose = false;
+  placing = false;
+  pushing = false;
 }
 
 setupGame();
@@ -186,8 +192,6 @@ function checkNeighbors(x, y) {
 
   return false;
 }
-
-let pushing = false;
 
 function pickupCard(x, y, type) {
   if((hand.length >= maxHand && type !== BOULDER) || checkNeighbors(x, y)) return;
@@ -262,14 +266,19 @@ function placeCard(x, y, type) {
     case DETECTOR:
       if(board[y][x].length === 0) return;
       let good = 0;
-      let nextGood = 0;
+      let nextGood = -1;
       for(let i = board[y][x].length - 1; i >= 0; i--) {
         if(isTool(board[y][x][i])) {
           good++;
           nextGood = i;
         }
       }
-      info = `\nGood cards in stack\n${good}\n\nNext good card at\n${layers - nextGood}`;
+      if(nextGood >= 0) {
+        info = `\nGood cards in stack\n${good}\n\nNext good card at\n${board[y][x].length - nextGood}`;
+      }
+      else {
+        info = `\nGood cards in stack\n${good}`;
+      }
       break;
     case CHERRY:
       forAllNeighbors(x, y, b => {
@@ -410,26 +419,54 @@ function hint(type) {
   centeredText(hints[type].text, 335 + 65, 180);
 }
 
+function textButton(txt, x, y, callback) {
+  let btn = button(x - bigTextWidth(txt) / 2, y-30, bigTextWidth(txt), 30);
+  if(!btn) {
+    centeredBigText(txt, x, y);
+  }
+  else {
+    cursorType = 'pointer';
+    callback(x, y);
+  }
+}
+
 function winScreen() {
   generalSprite(105, 30, 222, -60, 272, 210);
 
-  centeredBigText(`You found\nthe treasure!`, 174 + 65, 218);
+  centeredBigText(`You found${currentLevel>0?' all':''}\nthe treasure!`, 174 + 65, 218);
 
   generalSprite(202, 100, 132, -60, 80, 60);
 
-  if(true) {
-    centeredBigText(`Play again`, 174 + 65, 80);
-    cursorType = 'pointer';
+  if(currentLevel === 1) {
+    textButton(`Play again`, 174 + 65, 80, (x ,y) => {
+      centeredBigText('Play again', x, y + Math.sin(performance.now() / 200) * 10);
 
-    if(clicked) {
-      clicked = false;
-      setupGame();
-    }
+      if(clicked) {
+        clicked = false;
+        setupGame();
+      }
+    });
   }
   else {
-    centeredText(`Play again`, 174, 80);
+    textButton(`Play again`, 182, 80, (x ,y) => {
+      centeredBigText('Play again', x, y + Math.sin(performance.now() / 200) * 10);
 
-    centeredText(`Next level`, 174+130, 80);
+      if(clicked) {
+        clicked = false;
+        setupGame();
+      }
+    });
+
+
+    textButton(`Next level`, 176+130, 80, (x ,y) => {
+      centeredBigText('Next level', x, y + Math.sin(x + performance.now() / 200) * 10);
+
+      if(clicked) {
+        currentLevel++;
+        clicked = false;
+        setupGame();
+      }
+    });
   }
 }
 
@@ -497,29 +534,85 @@ function loseScreenB() {
   }
 }
 
-function runGame() {
-  cursorType = 'default';
+function titleScreen() {
+  generalSprite(105, 30, 222, -60, 272, 210);
 
-  generalSprite(453, 245, 495-23, 23, 23, 23);
+  centeredBigText('Treasure Solitaire', 240, 218);
 
-  let btn = button(453, 245, 23, 23);
+  centeredText('For Fireside Jam 2025\n\'Hunt\'', 240, 30);
+
+  centeredText('Code and art by Saffron\nGame design by Peter', 240, 75);
+
+  let btn = button(240 - bigTextWidth('Play') / 2, 90, bigTextWidth('Play'), 30);
 
   if(btn) {
     cursorType = 'pointer';
+    centeredBigText('Play', 240 + Math.sin(performance.now() / 200) * 10, 120);
+
     if(clicked) {
-      setupGame();
+      currentLevel = 0;
       clicked = false;
+      screen = 1;
+      setupGame();
     }
   }
+  else {
+    centeredBigText('Play', 240, 120);
+  }
+
+  btn = button(202, 130, 75, 60);
+
+  if(btn) {
+    generalSprite(202, 130, 132, -60, 75, 60);
+    cursorType = 'pointer';
+    if(clicked) {
+      currentLevel = 1;
+      clicked = false;
+      screen = 1;
+      setupGame();
+    }
+  }
+  else {
+    generalSprite(203, 130, 0, -179, 75, 60);
+  }
+}
+
+currentLevel = 1;
+screen = 1;
+won = true;
+hand = [CHEST, CHEST];
+
+function runGame() {
+  cursorType = 'default';
 
   generalSprite(3, 245, 495-99, 23, 23, 23);
 
-  btn = button(3, 245, 23, 23);
+  let btn = button(3, 245, 23, 23);
 
   if(btn) {
     cursorType = 'pointer';
     if(clicked) {
       shader = !shader;
+      clicked = false;
+    }
+  }
+
+  if(screen === 0) {
+    titleScreen();
+    cursor(cursorType);
+
+    clicked = false;
+    return;
+  }
+
+  generalSprite(453, 245, 495-23, 23, 23, 23);
+
+  btn = button(453, 245, 23, 23);
+
+  if(btn) {
+    cursorType = 'pointer';
+    if(clicked) {
+      setupGame();
       clicked = false;
     }
   }
@@ -594,10 +687,10 @@ function runGame() {
       if(stackSize === 0) {
         drawSprite(BOTTOM, left + (tw + gap) * x, 199 - (th + gap) * y);
         if(btn && clicked && placing !== false) {
-          placeCard(x, y, pushing.type);
+          placeCard(x, y, hand[placing]);
           clicked = false;
         }
-        if(btn && clicked && pushing.x - x >= -1 && pushing.x - x <= 1 && pushing.y - y >= -1 && pushing.y - y <= 1) {
+        if(btn && clicked && pushing && pushing.x - x >= -1 && pushing.x - x <= 1 && pushing.y - y >= -1 && pushing.y - y <= 1) {
           placeCard(x, y, pushing.type);
           clicked = false;
         }
