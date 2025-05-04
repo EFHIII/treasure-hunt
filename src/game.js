@@ -153,7 +153,7 @@ function hasTopTools(cards, n) {
 let dev = true;
 if(dev) {
   tutorial = false;
-  currentLevel = 2;
+  currentLevel = 3;
   screen = 1;
 }
 
@@ -314,9 +314,12 @@ function placeCard(x, y, type) {
     case ROCK:
     case CRAB:
     case OCTOPUS:
-    case CHEST:
-      playSound(5);
       board[y][x].unshift(type);
+      playSound(5);
+      break;
+    case CHEST:
+      board[y][x].unshift(type);
+      playSound(6);
       break;
     case SHOVEL:
       playSound(5);
@@ -793,9 +796,8 @@ function runGame() {
         hint(thisCard);
       }
 
-
       drawSprite(thisCard, x, 100 + (btn ? 2 : 0), -1, (!allBoulders && choose.choices[i] === BOULDER));
-      if(btn && clicked && (!allBoulders && choose.choices[i] !== BOULDER)) {
+      if(btn && clicked && (allBoulders || choose.choices[i] !== BOULDER)) {
         chooseChoice(i, choose.type);
         clicked = false;
         break;
@@ -944,7 +946,12 @@ function runGame() {
     for(let i = 0; i < hand.length; i++) {
       if(hand[i] === CHEST) treasures++;
     }
-    if(treasures < currentLevel + 1) {
+    if(currentLevel < 2) {
+      if(treasures < currentLevel + 1) {
+        won = false;
+      }
+    }
+    else if(treasures < challenges[currentLevel-2].deck[CHEST]+1) {
       won = false;
     }
 
