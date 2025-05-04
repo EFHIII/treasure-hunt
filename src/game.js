@@ -6,41 +6,54 @@ let currentLevel = 0;
 
 let screen = 0;
 
-const deckNums = [
-  [55, 16, 0, 6, 10, 2, 2, 4],
-  [62, 18, 0, 8, 12, 4, 4, 14, 1, 6, 6, 2, 6]
-];
-
 const challenges = [
   {
+    title: 'Normal Mode',
+    name: '',
+    desc: ``,
+    deck: [55, 16, 0, 6, 10, 2, 2, 4]
+  },
+  {
+    title: 'Rock and Stone',
     name: 'Rock',
     desc: `where's the\nsand?`,
     deck: [0, 52, 0, 8, 20, 2, 0, 0, 0, 0, 12, 1, 0]
   },
   {
+    title: 'Crab Rave',
     name: 'Crab',
     desc: `the hoard\nbecons`,
     deck: [8,  0, 0,10, 22, 4, 3,48, 0]
   },
   {
+    title: 'Tower of Babel',
     name: 'Tower',
     desc: `build a tower\n30 high`,
     deck: [62,24, 0, 8, 12, 4, 4,14, -1, 2, 6, 2, 6]
   },
   {
+    title: 'Hard Mode',
+    name: 'Hard',
+    desc: `collect BOTH\ntreasures`,
+    deck: [62, 18, 0, 8, 12, 4, 4, 14, 1, 6, 6, 2, 6]
+  },
+  {
+    title: 'Squid Game',
     name: 'Squid',
     desc: `what is\nthis deck?`,
     deck: [10, 2, 0, 8, 12, 2, 2, 2, 0, 15, 1, 1, 40]
   },
   {
+    title: 'House of Gold',
     name: 'Gold',
     desc: `callect all\n8 treasures!`,
     deck: [56,18, 0, 8, 12, 4, 4,14, 7, 6, 6, 2, 6]
   },
   {
+    title: 'Infinite Abyss',
     name: 'Abyss',
     desc: `Collect all\n 8 treasures!\nImpossibly hard!`,
-    deck: [341,99,0,45, 66,23,24,77, 7, 33, 33, 11, 33]
+    deck: [511,150,0,66, 101,33,34,115, 7, 50, 50, 20, 50]
   },
 ];
 
@@ -153,7 +166,7 @@ function hasTopTools(cards, n) {
 let dev = true;
 if(dev) {
   tutorial = false;
-  currentLevel = 4;
+  currentLevel = 3;
   screen = 1;
 }
 
@@ -166,8 +179,8 @@ function setupGame() {
     }
   }
   else {
-    for(let i = 0; i < challenges[currentLevel-2].deck.length; i++) {
-      deck.push(...new Array(Math.max(0,challenges[currentLevel-2].deck[i])).fill(i));
+    for(let i = 0; i < challenges[currentLevel].deck.length; i++) {
+      deck.push(...new Array(Math.max(0,challenges[currentLevel].deck[i])).fill(i));
     }
   }
 
@@ -181,41 +194,52 @@ function setupGame() {
 
   let fair = false, chest;
   while(!fair) {
-    shuffle(cards);
-    chest = Math.random() * cards.length / 4;
-    if(currentLevel === 4) chest = Infinity;
-    fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
-    let at = 0;
-    for(let i = 0; i < layers; i++) {
-      for(let y = 0; y < gridWidth * gridHeight; y++) {
-        if(cards[at++] === CHEST && layers - i - 1 < layers / 4) {
-          fair = false;
+    while(!fair) {
+      shuffle(cards);
+      chest = Math.random() * cards.length / 4;
+      if(currentLevel === 3) chest = Infinity;
+      fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
+      let at = 0;
+      for(let i = 0; i < layers; i++) {
+        for(let y = 0; y < gridWidth * gridHeight; y++) {
+          if(cards[at++] === CHEST && layers - i - 1 < layers / 4) {
+            fair = false;
+          }
         }
       }
     }
-  }
 
-  let at = 0;
+    let at = 0;
 
-  hand = [];
-  board = [];
-  for (let y = 0; y < gridHeight; y++) {
-    board.push([]);
-    for (let x = 0; x < gridWidth; x++) {
-      board[y].push([]);
-    }
-  }
-
-  for(let l = 0; l < layers; l++) {
+    hand = [];
+    board = [];
     for (let y = 0; y < gridHeight; y++) {
+      board.push([]);
       for (let x = 0; x < gridWidth; x++) {
-        if(at >= chest) {
-          board[y][x].push(CHEST);
-          chest = Infinity;
-        }
-        else board[y][x].push(cards[at++]);
+        board[y].push([]);
+      }
+    }
 
-        if(l === layers-1) board[y][x].reverse();
+    for(let l = 0; l < layers; l++) {
+      for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+          if(at >= chest) {
+            board[y][x].push(CHEST);
+            chest = Infinity;
+          }
+          else board[y][x].push(cards[at++]);
+
+          if(l === layers-1) {
+            board[y][x].reverse();
+            let lastChest = -Infinity;
+            for(let v = 0; v < board[y][x].length; v++) {
+              if(board[y][x][v] === CHEST) {
+                if(v - lastChest < 4) fair = false;
+                lastChest = v;
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -491,13 +515,9 @@ function leftHint() {
 
   generalSprite(8, 100, 0, -60, 132, 118);
 
-  if(currentLevel === 1) {
-    centeredBigText('Hard', 8 + 65, 208);
-    centeredText('collect BOTH\ntreasures', 8 + 65, 180);
-  }
-  else {
-    centeredBigText(challenges[currentLevel-2].name, 8 + 65, 208);
-    centeredText(challenges[currentLevel-2].desc, 8 + 65, 180);
+  if(currentLevel > 0) {
+    centeredBigText(challenges[currentLevel].name, 8 + 65, 208);
+    centeredText(challenges[currentLevel].desc, 8 + 65, 180);
   }
 }
 
@@ -529,7 +549,7 @@ function winScreen() {
 
   generalSprite(202, 100, 132, -60, 80, 60);
 
-  if(currentLevel === 1) {
+  if(currentLevel === challenges.length - 1) {
     textButton(`Play again`, 174 + 65, 80, (x ,y) => {
       centeredBigText('Play again', x, y + Math.sin(performance.now() / 200) * 10);
 
@@ -548,7 +568,6 @@ function winScreen() {
         setupGame();
       }
     });
-
 
     textButton(`Next level`, 176+130, 80, (x ,y) => {
       centeredBigText('Next level', x, y + Math.sin(x + performance.now() / 200) * 10);
@@ -840,7 +859,7 @@ function runGame() {
 
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
-      if(currentLevel === 4 && board[y][x].length >= 30) {
+      if(currentLevel === 3 && board[y][x].length >= 30) {
         board[y][x][0] = CHEST;
       }
 
@@ -956,7 +975,7 @@ function runGame() {
         won = false;
       }
     }
-    else if(treasures < challenges[currentLevel-2].deck[CHEST]+1) {
+    else if(treasures < challenges[currentLevel].deck[CHEST]+1) {
       won = false;
     }
 
