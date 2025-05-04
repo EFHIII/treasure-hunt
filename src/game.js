@@ -11,49 +11,57 @@ const challenges = [
     title: 'Normal Mode',
     name: '',
     desc: ``,
-    deck: [55, 16, 0, 6, 10, 2, 2, 4]
+    deck: [55, 16, 0, 6, 10, 2, 2, 4],
+    lock: 0
   },
   {
     title: 'Rock and Stone',
     name: 'Rock',
     desc: `where's the\nsand?`,
-    deck: [0, 52, 0, 8, 20, 2, 0, 0, 0, 0, 12, 1, 0]
+    deck: [0, 52, 0, 8, 20, 2, 0, 0, 0, 0, 12, 1, 0],
+    lock: 1
   },
   {
     title: 'Crab Rave',
     name: 'Crab',
     desc: `the hoard\nbecons`,
-    deck: [8,  0, 0,10, 22, 4, 3,48, 0]
+    deck: [8,  0, 0,10, 22, 4, 3,48, 0],
+    lock: 1
   },
   {
     title: 'Tower of Babel',
     name: 'Tower',
     desc: `build a tower\n30 high`,
-    deck: [62,24, 0, 8, 12, 4, 4,14, -1, 2, 6, 2, 6]
+    deck: [62,24, 0, 8, 12, 4, 4,14, -1, 2, 6, 2, 6],
+    lock: 1
   },
   {
     title: 'Hard Mode',
     name: 'Hard',
     desc: `collect BOTH\ntreasures`,
-    deck: [62, 18, 0, 8, 12, 4, 4, 14, 1, 6, 6, 2, 6]
+    deck: [62, 18, 0, 8, 12, 4, 4, 14, 1, 6, 6, 2, 6],
+    lock: 0
   },
   {
     title: 'Squid Game',
     name: 'Squid',
     desc: `what is\nthis deck?`,
-    deck: [10, 2, 0, 8, 12, 2, 2, 2, 0, 15, 1, 1, 40]
+    deck: [10, 2, 0, 8, 12, 2, 2, 2, 0, 15, 1, 1, 40],
+    lock: 1
   },
   {
     title: 'House of Gold',
     name: 'Gold',
     desc: `callect all\n8 treasures!`,
-    deck: [56,18, 0, 8, 12, 4, 4,14, 7, 6, 6, 2, 6]
+    deck: [56,18, 0, 8, 12, 4, 4,14, 7, 6, 6, 2, 6],
+    lock: 1
   },
   {
     title: 'Infinite Abyss',
     name: 'Abyss',
     desc: `Collect all\n 8 treasures!\nImpossibly hard!`,
-    deck: [511,150,0,66, 101,33,34,115, 7, 50, 50, 20, 50]
+    deck: [511,150,0,66, 101,33,34,115, 7, 50, 50, 20, 50],
+    lock: 1
   },
 ];
 
@@ -163,7 +171,7 @@ function hasTopTools(cards, n) {
   return tt >= n;
 }
 
-let dev = true;
+let dev = false;
 if(dev) {
   tutorial = false;
   currentLevel = 3;
@@ -173,15 +181,8 @@ if(dev) {
 function setupGame() {
   deck = [];
 
-  if(currentLevel < 2) {
-    for(let i = 0; i < deckNums[currentLevel].length; i++) {
-      deck.push(...new Array(deckNums[currentLevel][i]).fill(i));
-    }
-  }
-  else {
-    for(let i = 0; i < challenges[currentLevel].deck.length; i++) {
-      deck.push(...new Array(Math.max(0,challenges[currentLevel].deck[i])).fill(i));
-    }
+  for(let i = 0; i < challenges[currentLevel].deck.length; i++) {
+    deck.push(...new Array(Math.max(0,challenges[currentLevel].deck[i])).fill(i));
   }
 
   layers = Math.round((deck.length + 1) / gridWidth / gridHeight);
@@ -542,7 +543,39 @@ function textButton(txt, x, y, callback) {
   }
 }
 
+function smallTextButton(txt, x, y, callback) {
+  let btn = button(x - textWidth(txt) / 2, y-15, textWidth(txt), 15);
+  if(!btn) {
+    centeredText(txt, x, y);
+  }
+  else {
+    cursorType = 'pointer';
+    callback(x, y);
+  }
+}
+
 function winScreen() {
+  if(currentLevel === 0 && challenges[0].lock === 0) {
+    challenges[1].lock = 0;
+    challenges[2].lock = 0;
+    challenges[3].lock = 0;
+  }
+  else if(currentLevel === 4 && challenges[4].lock === 0) {
+    challenges[5].lock = 0;
+    challenges[6].lock = 0;
+  }
+  challenges[currentLevel].lock = -1;
+
+  let beaten = 0;
+  for(let i = 0; i < challenges.length; i++) {
+    if(challenges[i].lock === -1) beaten++;
+  }
+
+  if(beaten >= 5 && challenges[7].lock === 1) {
+    challenges[7].lock = 0;
+  }
+
+
   generalSprite(105, 30, 222, -60, 272, 210);
 
   centeredBigText(`You found${currentLevel>0?' all':''}\nthe treasure!`, 174 + 65, 218);
@@ -569,13 +602,12 @@ function winScreen() {
       }
     });
 
-    textButton(`Next level`, 176+130, 80, (x ,y) => {
-      centeredBigText('Next level', x, y + Math.sin(x + performance.now() / 200) * 10);
+    textButton(`Levels`, 176+130, 80, (x ,y) => {
+      centeredBigText('Levels', x, y + Math.sin(x + performance.now() / 200) * 10);
 
       if(clicked) {
-        currentLevel++;
+        screen = 2;
         clicked = false;
-        setupGame();
       }
     });
   }
@@ -603,19 +635,12 @@ function loseScreen() {
 
   generalSprite(196, 140, 132, -120, 90, 34);
 
-  if(true) {
-    centeredBigText(`Play again`, 174 + 65, 80);
-    cursorType = 'pointer';
+  centeredBigText(`Play again`, 174 + 65, 80);
+  cursorType = 'pointer';
 
-    if(clicked) {
-      clicked = false;
-      setupGame();
-    }
-  }
-  else {
-    centeredText(`Play again`, 174, 80);
-
-    centeredText(`Next level`, 174+130, 80);
+  if(clicked) {
+    clicked = false;
+    setupGame();
   }
 }
 
@@ -646,7 +671,7 @@ function loseScreenB() {
 function hardWarning() {
   generalSprite(105, 30, 222, -60, 272, 210);
 
-  centeredBigText(`Start on Hard mode?`, 174 + 69, 218);
+  centeredBigText(`Go to level select?`, 174 + 69, 218);
 
   textButton('No', 240-50, 100, (x, y) => {
     centeredBigText('No', x, y + Math.sin(performance.now()/200)*10);
@@ -659,16 +684,14 @@ function hardWarning() {
     }
   });
 
-    textButton('Yes', 240+50, 100, (x, y) => {
-      centeredBigText('Yes', x, y + Math.sin(performance.now()/200)*10);
+  textButton('Yes', 240+50, 100, (x, y) => {
+    centeredBigText('Yes', x, y + Math.sin(performance.now()/200)*10);
 
-      if(clicked) {
-        currentLevel = 1;
-        clicked = false;
-        screen = 1;
-        setupGame();
-      }
-    });
+    if(clicked) {
+      clicked = false;
+      screen = 2;
+    }
+  });
 }
 
 function titleScreen() {
@@ -720,6 +743,28 @@ function titleScreen() {
   }
 }
 
+function levelSelect() {
+  centeredText('For Fireside Jam 2025\n\'Hunt\'', 240, 30);
+
+  generalSprite(105, 30, 222, -60, 272, 210);
+
+  centeredBigText(`Level Select`, 174 + 65, 218);
+
+  for(let i = 0; i < challenges.length; i++) {
+    smallTextButton(`${challenges[i].lock===0?'NEW! ':''}${challenges[i].lock===1?'Locked':challenges[i].title}`, 240, 185-17*i, (x ,y) => {
+
+      centeredText(`${challenges[i].lock===0?'NEW! ':''}${challenges[i].lock===1?'Locked':challenges[i].title}`, x+ Math.sin(performance.now() / 200) * 10 * (challenges[i].lock===1?0:1), y );
+
+      if(challenges[i].lock !== 1 && clicked) {
+        clicked = false;
+        screen = 1;
+        currentLevel = i;
+        setupGame();
+      }
+    });
+  }
+}
+
 function runGame() {
   cursorType = 'default';
 
@@ -761,12 +806,20 @@ function runGame() {
     }
   }
 
-  if(screen === 0) {
-    titleScreen();
-    cursor(cursorType);
 
-    clicked = false;
-    return;
+  switch(screen) {
+    case 0:
+      titleScreen();
+      cursor(cursorType);
+
+      clicked = false;
+      return;
+    case 2:
+      levelSelect();
+      cursor(cursorType);
+
+      clicked = false;
+      return;
   }
 
   generalSprite(453, 245, 495-23, 23, 23, 23);
