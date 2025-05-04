@@ -33,9 +33,14 @@ function drawSprite(spriteIndex, x, y, boardHeight = -1, tooLow = false) {
 
   spriteCount++;
 
-  if(boardHeight >= 10) {
-    drawDigit(Math.floor((boardHeight+11) / 10), x+1, y+1);
-    drawDigit((boardHeight+1) % 10, x+8, y+1);
+  if(boardHeight >= 100) {
+    drawDigit(Math.floor((boardHeight) / 100 + 1), x+1, y+1);
+    drawDigit(Math.floor((boardHeight) / 10 % 10 + 1), x+8, y+1);
+    drawDigit((boardHeight) % 10 + 1, x+15, y+1);
+  }
+  else if(boardHeight >= 10) {
+    drawDigit(Math.floor((boardHeight) / 10 + 1), x+1, y+1);
+    drawDigit((boardHeight) % 10 + 1, x+8, y+1);
   }
   else if(boardHeight > 0) {
     drawDigit(boardHeight + 1, x+1, y+1);

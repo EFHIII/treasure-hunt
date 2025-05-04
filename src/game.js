@@ -138,11 +138,9 @@ function setupGame() {
       for(let y = 0; y < gridWidth * gridHeight; y++) {
         if(cards[at++] === CHEST && layers - i - 1 < layers / 4) {
           fair = false;
-          console.log('unfair');
         }
       }
     }
-    console.log(fair, layers);
   }
 
   let at = 0;
@@ -741,8 +739,8 @@ function runGame() {
 
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
-      let stackSize = board[y][x].length;
-      btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
+      let stackSize = Math.min(14, board[y][x].length);
+      btn = button(left + (tw + gap) * x, 199-5 + stackSize - (th + gap) * y, tw, th);
 
       let thisCard = board[y][x][0];
       if(nearOctopus(x, y)) thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
@@ -755,7 +753,7 @@ function runGame() {
       else if(pushing.x === x && pushing.y === y) hint(thisCard);
 
       if(stackSize === 0) {
-        drawSprite(BOTTOM, left + (tw + gap) * x, 199 - (th + gap) * y);
+        drawSprite(BOTTOM, left + (tw + gap) * x, 199-5 - (th + gap) * y);
         if(btn && clicked && placing !== false) {
           placeCard(x, y, hand[placing]);
           clicked = false;
@@ -767,18 +765,18 @@ function runGame() {
         continue;
       }
 
-      drawSprite(BACK, left + (tw + gap) * x, 199 - (th + gap) * y);
+      drawSprite(BACK, left + (tw + gap) * x, 199-5 - (th + gap) * y);
 
       if(pushing.x === x && pushing.y === y && !won) {
-        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
-        drawSprite(thisCard, left + (tw + gap) * x, 207 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
+        drawSprite(thisCard, left + (tw + gap) * x, 207-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else if(btn && !won) {
-        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
-        drawSprite(thisCard, left + (tw + gap) * x, 201 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
+        drawSprite(thisCard, left + (tw + gap) * x, 201-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else {
-        drawSprite(thisCard, left + (tw + gap) * x, 198 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        drawSprite(thisCard, left + (tw + gap) * x, 198-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
 
       if(btn && clicked) {
