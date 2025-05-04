@@ -252,7 +252,7 @@ function forAllNeighbors(x, y, fn) {
     if(x + X < 0 || x + X >= gridWidth) continue;
     for(let Y = -1; Y < 2; Y++) {
       if(y + Y < 0 || y + Y >= gridHeight) continue;
-      fn(board[y+Y][x+X]);
+      fn(board[y+Y][x+X], y+Y, x+X);
     }
   }
 }
@@ -273,10 +273,21 @@ function checkNeighbors(x, y) {
   return false;
 }
 
+function getGrid(x, y) {
+  let stackSize = board[y] && board[y][x] ? Math.min(14, board[y][x].length) : 0;
+  return {x:left + (tw + gap) * x, y:199-5 + stackSize - (th + gap) * y};
+}
+
+function getHand(c) {
+  return {x:c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2, y:5};
+}
+
 function pickupCard(x, y, type) {
   if((hand.length >= maxHand && type !== BOULDER) || checkNeighbors(x, y)) return;
 
   if(type !== CRAB && type !== CHEST && type !== BOULDER) playSound(0);
+
+  let g, h;
 
   switch(type) {
     case CRAB: break;
@@ -288,6 +299,11 @@ function pickupCard(x, y, type) {
       playSound(7);
       // WIN condition
       won = true;
+
+      g = getGrid(x, y);
+      h = getHand(hand.length);
+      animateMove(type, g.x,g.y,h.x,h.y);
+
       hand.push(type);
       board[y][x].shift();
       break;
@@ -296,6 +312,10 @@ function pickupCard(x, y, type) {
       forAllNeighbors(x, y, b => b.unshift(SAND));
       break;
     default:
+      g = getGrid(x, y);
+      h = getHand(hand.length);
+      animateMove(type, g.x,g.y,h.x,h.y);
+
       hand.push(type);
       board[y][x].shift();
   }
@@ -327,16 +347,27 @@ function activateCard(index, type) {
 }
 
 function placeCard(x, y, type) {
+
+  let g, h;
+
   switch(type) {
     case SAND:
       return;
     case ROCK:
     case CRAB:
     case OCTOPUS:
+      g = getGrid(x, y);
+      h = getHand(hand.length-1);
+      animateMove(type,h.x,h.y,g.x,g.y);
+
       board[y][x].unshift(type);
       playSound(5);
       break;
     case CHEST:
+      g = getGrid(x, y);
+      h = getHand(hand.length-1);
+      animateMove(type,h.x,h.y,g.x,g.y);
+
       board[y][x].unshift(type);
       playSound(6);
       break;
@@ -352,13 +383,27 @@ function placeCard(x, y, type) {
       break;
     case BOMB:
       playSound(1);
-      forAllNeighbors(x, y, b => {
+
+      g = getGrid(x, y);
+      h = getHand(hand.length-1);
+      animateMove(type,h.x,h.y,g.x,g.y);
+
+      forAllNeighbors(x, y, (b, X, Y) => {
+        g = getGrid(X+(X-1)*10, Y+(Y-1)*10);
+        h = getGrid(X, Y);
+        animateMove(b[0],h.x,h.y,g.x,g.y);
+
         if(b[0] === CHEST) discardedChest = true;
         b.shift();
       });
       break;
     case DETECTOR:
       playSound(5);
+
+      g = getGrid(x, y);
+      h = getHand(hand.length-1);
+      animateMove(type,h.x,h.y,g.x,g.y);
+
       if(board[y][x].length === 0) return;
       let good = 0;
       let nextGood = -1;
@@ -377,9 +422,19 @@ function placeCard(x, y, type) {
       break;
     case CHERRY:
       playSound(2);
-      forAllNeighbors(x, y, b => {
+
+      forAllNeighbors(x, y, (b, X, Y) => {
+        g = getGrid(X+(X-1)*20, Y+(Y-1)*20);
+        h = getGrid(X, Y);
+        animateMove(b[0],h.x,h.y,g.x,g.y);
+
+        g = getGrid(X+(X)*10, Y+(Y)*10);
+        h = getGrid(X, Y);
+        animateMove(b[1],h.x,h.y,g.x,g.y);
+
         if(b[0] === CHEST) discardedChest = true;
         b.shift();
+
         if(b[0] === CHEST) discardedChest = true;
         b.shift();
       });
@@ -387,6 +442,11 @@ function placeCard(x, y, type) {
     case BOULDER:
       if(!checkNeighbors(x, y)) {
         playSound(5);
+
+        h = getGrid(pushing.x, pushing.y);
+        g = getGrid(x, y);
+        animateMove(type,h.x,h.y,g.x,g.y);
+
         board[y][x].unshift(type);
         board[pushing.y][pushing.x].shift();
       }
@@ -420,6 +480,10 @@ function chooseChoice(choice, type) {
     case SHOVEL:
     case TROWEL:
       if(choose.choices[choice] !== BOULDER) {
+        h = getHand(hand.length);
+        g =  choice * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
+        animateMove(choose.choices[choice],g,100,h.x,h.y);
+
         hand.push(choose.choices[choice]);
       }
 
@@ -758,6 +822,76 @@ function levelSelect() {
   }
 }
 
+function cubicBezier(p1, p2, p3, p4, t) {
+  return (1 - t) ** 3 * p1 + 3 * (1 - t) ** 2 * t * p2 + 3 * (1 - t) * t * t * p3 + t ** 3 * p4;
+}
+
+function pointOnBezier(x1, y1, c1x, c1y, c2x, c2y, x2, y2, x, resolution = 20) {
+  let at = 0.5;
+  let inc = 0.25;
+  let b;
+  for(let i = 0; i < resolution; i++) {
+    b = cubicBezier(x1, c1x, c2x, x2, at);
+    if(b > x) at -= inc;
+    else at += inc;
+    inc /= 2;
+  }
+  return cubicBezier(y1, c1y, c2y, y2, at);
+}
+
+function easeValue(atTime, fromTime, toTime, fromValue, toValue, easeA, easeB, beforeFromTime = false, beforeFromValue = false, afterToTime = false, afterToValue = false, resolution = 20) {
+  const duration = toTime - fromTime;
+
+  const beforeTime = typeof beforeFromTime === 'number' ? beforeFromTime - fromTime : duration;
+  const beforeValue = typeof beforeFromValue === 'number' ? beforeFromValue : fromValue;
+  const afterTime = typeof afterToTime === 'number' ? afterToTime - toTime : duration;
+  const afterValue = typeof afterToValue === 'number' ? afterToValue : toValue;
+
+  const beforeSlope = (beforeValue - fromValue) / beforeTime;
+  const afterSlope = (afterValue - toValue) / afterTime;
+
+  const halfDuration = duration / 2;
+
+  return pointOnBezier(
+    fromTime, fromValue,
+    fromTime + halfDuration * easeA, fromValue + beforeSlope * halfDuration * easeA,
+    toTime - halfDuration * easeB, toValue - afterSlope * halfDuration * easeB,
+    toTime, toValue,
+    atTime, resolution);
+}
+
+let animations = [];
+function animateMove(sprite, x1, y1, x2, y2) {
+  animations.push({
+    sprite, x1, y1, x2, y2,
+    started: performance.now(),
+    duration: 300,
+  });
+}
+
+function animating(sprite, x, y, v1 = -1, v2 = false) {
+  for(let i = 0; i < animations.length; i++) {
+    if(animations[i].sprite === sprite && animations[i].x2 === x && Math.abs(animations[i].y2 - y) < 10) {
+      return;
+    }
+  }
+  drawSprite(sprite, x, y, v1, v2);
+}
+
+function animate() {
+  for(let i = 0; i < animations.length; i++) {
+    let an = animations[i];
+    let x = easeValue(performance.now(), an.started, an.started+an.duration, an.x1, an.x2, 1, 1);
+    let y = easeValue(performance.now(), an.started, an.started+an.duration, an.y1, an.y2, 1, 1);
+    drawSprite(an.sprite, x, y);
+
+    if(performance.now()-an.duration > an.started) {
+      animations.splice(i, 1);
+      i--;
+    }
+  }
+}
+
 function runGame() {
   cursorType = 'default';
 
@@ -954,16 +1088,16 @@ function runGame() {
 
       drawSprite(BACK, left + (tw + gap) * x, 199-5 - (th + gap) * y);
 
+      drawSprite(board[y][x].length === 1 ? BOTTOM : nearOctopus(x, y) ? INKED : board[y][x][1], left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, board[y][x].length - 1, true);
       if(pushing.x === x && pushing.y === y && !won) {
-        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
-        drawSprite(thisCard, left + (tw + gap) * x, 207-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        animating(thisCard, left + (tw + gap) * x, 207-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else if(btn && !won) {
-        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
-        drawSprite(thisCard, left + (tw + gap) * x, 201-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        //drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
+        animating(thisCard, left + (tw + gap) * x, 201-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else {
-        drawSprite(thisCard, left + (tw + gap) * x, 198-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        animating(thisCard, left + (tw + gap) * x, 198-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
 
       if(btn && clicked) {
@@ -981,8 +1115,17 @@ function runGame() {
     }
   }
 
+  for(let c = 0; c < 8; c++) {
+    let x = c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2;
+
+    drawSprite(BOTTOM, x-2, 5-2);
+    drawSprite(BOTTOM, x+2, 5-2);
+    drawSprite(BOTTOM, x-2, 5+2);
+    drawSprite(BOTTOM, x+2, 5+2);
+  }
+
   for(let c = 0; c < hand.length; c++) {
-    let x = c * (tw + gap) + mid - (tw * hand.length + gap * (hand.length - 1)) / 2;
+    let x = c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2;
 
     let thisCard = hand[c];
     if((c > 0 && hand[c-1] === OCTOPUS) || (c < hand.length - 1 && hand[c+1] === OCTOPUS)) {
@@ -997,7 +1140,8 @@ function runGame() {
       hint(thisCard);
     }
 
-    drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
+    //drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
+    animating(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
 
     if(btn && clicked && !won) {
       if(placing === c) {
@@ -1008,6 +1152,8 @@ function runGame() {
       clicked = false;
     }
   }
+
+  animate();
 
   if(placing !== false) {
     if((placing > 0 && hand[placing-1] === OCTOPUS) || (placing < hand.length - 1 && hand[placing+1] === OCTOPUS)) {
