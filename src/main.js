@@ -19,6 +19,7 @@ renderThread.onmessage = msg => {
         toggleSound();
         return;
       }
+      sounds[msg.data.sound].rate(1 + Math.random() * 0.1);
       sounds[msg.data.sound].play();
       break;
   }
