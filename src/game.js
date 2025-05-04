@@ -805,6 +805,18 @@ function titleScreen() {
     generalSprite(203, 130, 0, -179, 75, 60);
   }
 
+  generalSprite(330, 50, 559, 18, 30, 18);
+
+  btn = button(330, 50, 30, 18);
+
+  if(btn) {
+    cursorType = 'pointer';
+    if(clicked) {
+      postMessage({type:'discord'});
+      clicked = false;
+    }
+  }
+
   if(warningHard) {
     hardWarning();
   }

@@ -25,6 +25,9 @@ renderThread.onmessage = msg => {
     case 'fullscreen':
       document.fullscreenElement ? document.exitFullscreen() : document.body.requestFullscreen();
       break;
+    case 'discord':
+      window.open("https://discord.com/invite/ARHq4BbyjY", "_blank");
+      break;
   }
 };
 
