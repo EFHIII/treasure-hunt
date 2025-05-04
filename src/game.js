@@ -205,12 +205,17 @@ function checkNeighbors(x, y) {
 
 function pickupCard(x, y, type) {
   if((hand.length >= maxHand && type !== BOULDER) || checkNeighbors(x, y)) return;
+
+  if(type !== CRAB && type !== CHEST && type !== BOULDER) playSound(0);
+
   switch(type) {
     case CRAB: break;
     case BOULDER:
+        playSound(4);
       pushing = {type, x, y};
       break;
     case CHEST:
+      playSound(7);
       // WIN condition
       won = true;
       hand.push(type);
@@ -239,6 +244,7 @@ function activateCard(index, type) {
     case CHERRY:
     case OCTOPUS:
     case CHEST:
+      playSound(4);
       placing = index;
       pushing = false;
       break;
@@ -258,23 +264,28 @@ function placeCard(x, y, type) {
     case CRAB:
     case OCTOPUS:
     case CHEST:
+      playSound(5);
       board[y][x].unshift(type);
       break;
     case SHOVEL:
+      playSound(5);
       if(board[y][x].length === 0) return;
       choose = {type, x, y, choices: board[y][x].splice(0, 4)};
       break;
     case TROWEL:
+      playSound(5);
       if(board[y][x].length === 0) return;
       choose = {type, x, y, choices: board[y][x].splice(0, 2)};
       break;
     case BOMB:
+      playSound(1);
       forAllNeighbors(x, y, b => {
         if(b[0] === CHEST) discardedChest = true;
         b.shift();
       });
       break;
     case DETECTOR:
+      playSound(5);
       if(board[y][x].length === 0) return;
       let good = 0;
       let nextGood = -1;
@@ -292,6 +303,7 @@ function placeCard(x, y, type) {
       }
       break;
     case CHERRY:
+      playSound(2);
       forAllNeighbors(x, y, b => {
         if(b[0] === CHEST) discardedChest = true;
         b.shift();
@@ -301,8 +313,12 @@ function placeCard(x, y, type) {
       break;
     case BOULDER:
       if(!checkNeighbors(x, y)) {
+        playSound(5);
         board[y][x].unshift(type);
         board[pushing.y][pushing.x].shift();
+      }
+      else {
+        playSound(3);
       }
       pushing = false;
       return;
@@ -337,8 +353,10 @@ function chooseChoice(choice, type) {
       if(choose.choices[choice] === CHEST) {
         // WIN condition
         won = true;
+        playSound(7);
       }
       else {
+        playSound(5);
         for(let i = 0; i < choose.choices.length; i++) {
           if(i === choice) continue;
           if(choose.choices[i] === CHEST) discardedChest = true;
@@ -625,6 +643,8 @@ function titleScreen() {
   }
 }
 
+playingSound = true;
+
 function runGame() {
   cursorType = 'default';
 
@@ -637,6 +657,19 @@ function runGame() {
     if(clicked) {
       shader = !shader;
       clicked = false;
+    }
+  }
+
+  generalSprite(27, 245, 495-99+23+(playingSound?0:27), 23, 27, 23);
+
+  btn = button(27, 245, 23, 23);
+
+  if(btn) {
+    cursorType = 'pointer';
+    if(clicked) {
+      playingSound = !playingSound;
+      clicked = false;
+      playSound(-1);
     }
   }
 
@@ -660,7 +693,7 @@ function runGame() {
     }
   }
 
-  textButton('?', 40, 267, (x, y) => {
+  textButton('?', 60, 267, (x, y) => {
     centeredBigText('!', x, y);
     if(clicked) {
       tutorial = true;
@@ -813,7 +846,10 @@ function runGame() {
     drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
 
     if(btn && clicked && !won) {
-      if(placing === c) placing = false;
+      if(placing === c) {
+        placing = false;
+        playSound(3);
+      }
       else activateCard(c, hand[c]);
       clicked = false;
     }

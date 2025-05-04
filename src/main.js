@@ -14,6 +14,13 @@ renderThread.onmessage = msg => {
     case 'cursor':
       document.body.style.cursor = msg.data.style;
       break;
+    case 'sound':
+      if(msg.data.sound < 0) {
+        toggleSound();
+        return;
+      }
+      sounds[msg.data.sound].play();
+      break;
   }
 };
 

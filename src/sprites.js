@@ -1,3 +1,7 @@
+function playSound(n) {
+  postMessage({sound: n, type: 'sound'});
+}
+
 function drawDigit(digit, x, y) {
   if (spriteCount >= spriteSlots) {
     console.error(`ran out of sprite slots`);
