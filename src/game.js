@@ -56,6 +56,7 @@ let won = false;
 let discardedChest = false;
 let pushing = false;
 let tutorial = true;
+let warningHard = false;
 
 function shuffle(array) {
   let currentIndex = array.length;
@@ -75,8 +76,8 @@ function isTool(id) {
     case SHOVEL:
     case TROWEL:
     case BOMB:
-    case BUCKET:
-    case DETECTOR:
+    //case BUCKET:
+    //case DETECTOR:
     case CHERRY:
       return true;
       break;
@@ -132,6 +133,16 @@ function setupGame() {
     shuffle(cards);
     chest = Math.random() * cards.length / 4;
     fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
+    let at = 0;
+    for(let i = 0; i < layers; i++) {
+      for(let y = 0; y < gridWidth * gridHeight; y++) {
+        if(cards[at++] === CHEST && layers - i - 1 < layers / 4) {
+          fair = false;
+          console.log('unfair');
+        }
+      }
+    }
+    console.log(fair, layers);
   }
 
   let at = 0;
@@ -231,6 +242,7 @@ function activateCard(index, type) {
     case OCTOPUS:
     case CHEST:
       placing = index;
+      pushing = false;
       break;
     case BUCKET:
       hand = [];
@@ -269,7 +281,7 @@ function placeCard(x, y, type) {
       let good = 0;
       let nextGood = -1;
       for(let i = board[y][x].length - 1; i >= 0; i--) {
-        if(isTool(board[y][x][i]) || board[y][x][i] === CHEST) {
+        if(isTool(board[y][x][i]) || board[y][x][i] === BUCKET || board[y][x][i] === DETECTOR || board[y][x][i] === CHEST) {
           good++;
           nextGood = i;
         }
@@ -384,7 +396,7 @@ const hints = [
     text: `Can't be picked\nup by hand\nDrop by playing it`
   }, {
     name: `Treasure`,
-    text: `Huzzah!\nCollect ${currentLevel === 0 ? 'it' : 'BOTH\n'} to win!`
+    text: `Huzzah!\nCollect ${currentLevel === 0 ? 'it' : 'BOTH\n'} to win!\n\nDrop by playing it`
   }, {
     name: `Detector`,
     text: `Tells how many\ngood cards are\nin the stack\nand how deep\nthe nearest is`
@@ -538,7 +550,39 @@ function loseScreenB() {
   }
 }
 
+function hardWarning() {
+  generalSprite(105, 30, 222, -60, 272, 210);
+
+  centeredBigText(`Start on Hard mode?`, 174 + 69, 218);
+
+  textButton('No', 240-50, 100, (x, y) => {
+    centeredBigText('No', x, y + Math.sin(performance.now()/200)*10);
+
+    if(clicked) {
+      currentLevel = 0;
+      clicked = false;
+      screen = 1;
+      setupGame();
+    }
+  });
+
+    textButton('Yes', 240+50, 100, (x, y) => {
+      centeredBigText('Yes', x, y + Math.sin(performance.now()/200)*10);
+
+      if(clicked) {
+        currentLevel = 1;
+        clicked = false;
+        screen = 1;
+        setupGame();
+      }
+    });
+}
+
 function titleScreen() {
+  if(warningHard) {
+    hardWarning();
+  }
+
   generalSprite(105, 30, 222, -60, 272, 210);
 
   centeredBigText('Treasure Solitaire', 240, 218);
@@ -570,14 +614,16 @@ function titleScreen() {
     generalSprite(202, 130, 132, -60, 75, 60);
     cursorType = 'pointer';
     if(clicked) {
-      currentLevel = 1;
+      warningHard = true;
       clicked = false;
-      screen = 1;
-      setupGame();
     }
   }
   else {
     generalSprite(203, 130, 0, -179, 75, 60);
+  }
+
+  if(warningHard) {
+    hardWarning();
   }
 }
 
@@ -632,13 +678,17 @@ function runGame() {
     hint(choose.type);
 
     let len = choose.choices.length;
+    let allBoulders = true;
+    for(let i = 0; i < len; i++) {
+      if(choose.choices[i] !== BOULDER) allBoulders = false;
+    }
     for(let i = 0; i < len; i++) {
       let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
 
       let thisCard = choose.choices[i];
 
       if((i > 0 && choose.choices[i-1] === OCTOPUS) || (i < len - 1 && choose.choices[i+1] === OCTOPUS)) {
-        thisCard = INKED;
+        thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
       }
 
       btn = button(x, 100, tw, th);
@@ -648,8 +698,8 @@ function runGame() {
       }
 
 
-      drawSprite(thisCard, x, 100 + (btn ? 2 : 0));
-      if(btn && clicked) {
+      drawSprite(thisCard, x, 100 + (btn ? 2 : 0), -1, (!allBoulders && choose.choices[i] === BOULDER));
+      if(btn && clicked && (!allBoulders && choose.choices[i] !== BOULDER)) {
         chooseChoice(i, choose.type);
         clicked = false;
         break;
@@ -695,7 +745,7 @@ function runGame() {
       btn = button(left + (tw + gap) * x, 199 + stackSize - (th + gap) * y, tw, th);
 
       let thisCard = board[y][x][0];
-      if(nearOctopus(x, y)) thisCard = INKED;
+      if(nearOctopus(x, y)) thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
 
       if(btn) {
         cursorType = 'pointer';
@@ -719,7 +769,11 @@ function runGame() {
 
       drawSprite(BACK, left + (tw + gap) * x, 199 - (th + gap) * y);
 
-      if((btn || (pushing.x === x && pushing.y === y)) && !won) {
+      if(pushing.x === x && pushing.y === y && !won) {
+        drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
+        drawSprite(thisCard, left + (tw + gap) * x, 207 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+      }
+      else if(btn && !won) {
         drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197 + stackSize - (th + gap) * y, -1, true);
         drawSprite(thisCard, left + (tw + gap) * x, 201 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
@@ -747,7 +801,7 @@ function runGame() {
 
     let thisCard = hand[c];
     if((c > 0 && hand[c-1] === OCTOPUS) || (c < hand.length - 1 && hand[c+1] === OCTOPUS)) {
-      thisCard = INKED;
+      thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
     }
 
     btn = button(x, 5, tw, th);
@@ -758,7 +812,7 @@ function runGame() {
       hint(thisCard);
     }
 
-    drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0));
+    drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
 
     if(btn && clicked && !won) {
       if(placing === c) placing = false;
