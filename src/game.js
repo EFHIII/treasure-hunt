@@ -55,6 +55,7 @@ let clicked = false;
 let won = false;
 let discardedChest = false;
 let pushing = false;
+let tutorial = true;
 
 function shuffle(array) {
   let currentIndex = array.length;
@@ -615,6 +616,14 @@ function runGame() {
     }
   }
 
+  textButton('?', 40, 267, (x, y) => {
+    centeredBigText('!', x, y);
+    if(clicked) {
+      tutorial = true;
+      clicked = false;
+    }
+  });
+
   if(currentLevel > 0) {
     leftHint();
   }
@@ -651,27 +660,32 @@ function runGame() {
     clicked = false;
     return;
   }
-  if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
+
+  if(tutorial) {
+    won = true;
+    cursorType = 'pointer';
+    if(clicked) {
+      tutorial = false;
+    }
+    clicked = false;
+  }
+  else if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
     won = true;
     loseScreen();
-    cursor(cursorType);
     clicked = false;
   }
   else if(discardedChest) {
     won = true;
     loseScreenB();
-    cursor(cursorType);
     clicked = false;
   }
   else if(info) {
     won = true;
     infoScreen();
-    cursor(cursorType);
     clicked = false;
   }
   else if(won) {
     winScreen();
-    cursor(cursorType);
     clicked = false;
   }
 
@@ -782,6 +796,29 @@ function runGame() {
     }
 
     if(won) winScreen();
+  }
+
+  if(tutorial) {
+    generalSprite(10, 5, 493, -60, 450, 240);
+
+    centeredBigText('RULES', 245, 225);
+
+    centeredBigText('Goal', 225, 195);
+
+    centeredText('Find the treasure\ncard by digging\nthrough these\npiles of sand', 250, 105);
+
+    centeredText('Click cards to\npick them up\nand add them\nto your hand', 120, 190);
+
+    centeredBigText('Max', 115, 213);
+    centeredBigText('8', 165, 213);
+
+    centeredText('You can\'t pick up a\ncard that\'s lower\n  than the 8 around it', 115, 60);
+
+    centeredText('Height', 148, 78);
+
+    centeredText('Click cards in your\nhand to use them\nYou cannot\nuse sand', 388, 185);
+
+    centeredText('When using certain\ncards, select a card\npile to use it on', 388, 65);
   }
 
   cursor(cursorType);
