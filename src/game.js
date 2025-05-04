@@ -346,7 +346,17 @@ function activateCard(index, type) {
   }
 }
 
-function placeCard(x, y, type) {
+function slideLeft(c) {
+  for(let i = c+1; i < hand.length; i++) {
+    h1 = getHand(i);
+    h2 = getHand(i-1);
+    animateMove(hand[i],h1.x,h1.y,h2.x,h2.y);
+  }
+}
+
+function placeCard(x, y, type, c) {
+
+  if(c) slideLeft(c);
 
   let g, h;
 
@@ -357,7 +367,7 @@ function placeCard(x, y, type) {
     case CRAB:
     case OCTOPUS:
       g = getGrid(x, y);
-      h = getHand(hand.length-1);
+      h = getHand(c);
       animateMove(type,h.x,h.y,g.x,g.y);
 
       board[y][x].unshift(type);
@@ -365,7 +375,7 @@ function placeCard(x, y, type) {
       break;
     case CHEST:
       g = getGrid(x, y);
-      h = getHand(hand.length-1);
+      h = getHand(c);
       animateMove(type,h.x,h.y,g.x,g.y);
 
       board[y][x].unshift(type);
@@ -384,10 +394,6 @@ function placeCard(x, y, type) {
     case BOMB:
       playSound(1);
 
-      g = getGrid(x, y);
-      h = getHand(hand.length-1);
-      animateMove(type,h.x,h.y,g.x,g.y);
-
       forAllNeighbors(x, y, (b, X, Y) => {
         g = getGrid(X+(X-1)*10, Y+(Y-1)*10);
         h = getGrid(X, Y);
@@ -401,7 +407,7 @@ function placeCard(x, y, type) {
       playSound(5);
 
       g = getGrid(x, y);
-      h = getHand(hand.length-1);
+      h = getHand(c);
       animateMove(type,h.x,h.y,g.x,g.y);
 
       if(board[y][x].length === 0) return;
@@ -1076,7 +1082,7 @@ function runGame() {
       if(stackSize === 0) {
         drawSprite(BOTTOM, left + (tw + gap) * x, 199-5 - (th + gap) * y);
         if(btn && clicked && placing !== false) {
-          placeCard(x, y, hand[placing]);
+          placeCard(x, y, hand[placing], placing);
           clicked = false;
         }
         if(btn && clicked && pushing && pushing.x - x >= -1 && pushing.x - x <= 1 && pushing.y - y >= -1 && pushing.y - y <= 1) {
@@ -1108,7 +1114,7 @@ function runGame() {
           placeCard(x, y, pushing.type);
         }
         else {
-          placeCard(x, y, hand[placing]);
+          placeCard(x, y, hand[placing], placing);
         }
         clicked = false;
       }
