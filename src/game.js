@@ -774,6 +774,23 @@ function runGame() {
     }
   }
 
+
+  if(screen !== 0) {
+    generalSprite(3, 3, 498 + 34, 20, 25, 20);
+
+    let btn = button(3, 3, 25, 23);
+
+    if(btn) {
+      cursorType = 'pointer';
+      if(clicked) {
+        screen = 0;
+        warningHard = false;
+        clicked = false;
+      }
+    }
+  }
+
+
   generalSprite(3, 245, 495-99, 23, 23, 23);
 
   btn = button(3, 245, 23, 23);
