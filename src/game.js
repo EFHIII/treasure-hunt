@@ -171,13 +171,6 @@ function hasTopTools(cards, n) {
   return tt >= n;
 }
 
-let dev = false;
-if(dev) {
-  tutorial = false;
-  currentLevel = 3;
-  screen = 1;
-}
-
 function setupGame() {
   deck = [];
 
