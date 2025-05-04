@@ -252,7 +252,7 @@ function forAllNeighbors(x, y, fn) {
     if(x + X < 0 || x + X >= gridWidth) continue;
     for(let Y = -1; Y < 2; Y++) {
       if(y + Y < 0 || y + Y >= gridHeight) continue;
-      fn(board[y+Y][x+X], y+Y, x+X);
+      fn(board[y+Y][x+X], X, Y);
     }
   }
 }
@@ -339,6 +339,10 @@ function activateCard(index, type) {
       pushing = false;
       break;
     case BUCKET:
+      for(let i = 0; i < hand.length; i++) {
+        h = getHand(i);
+        animateMove(hand[i],h.x,h.y,h.x,h.y-100);
+      }
       hand = [];
       break;
     default:
@@ -395,8 +399,8 @@ function placeCard(x, y, type, c) {
       playSound(1);
 
       forAllNeighbors(x, y, (b, X, Y) => {
-        g = getGrid(X+(X-1)*10, Y+(Y-1)*10);
-        h = getGrid(X, Y);
+        g = getGrid(x+X*10, y+Y*10);
+        h = getGrid(x, y);
         animateMove(b[0],h.x,h.y,g.x,g.y);
 
         if(b[0] === CHEST) discardedChest = true;
@@ -430,12 +434,12 @@ function placeCard(x, y, type, c) {
       playSound(2);
 
       forAllNeighbors(x, y, (b, X, Y) => {
-        g = getGrid(X+(X-1)*20, Y+(Y-1)*20);
-        h = getGrid(X, Y);
+        g = getGrid(x+X*20, y+Y*20);
+        h = getGrid(x, y);
         animateMove(b[0],h.x,h.y,g.x,g.y);
 
-        g = getGrid(X+(X)*10, Y+(Y)*10);
-        h = getGrid(X, Y);
+        g = getGrid(x+X*10, y+Y*10);
+        h = getGrid(x, y);
         animateMove(b[1],h.x,h.y,g.x,g.y);
 
         if(b[0] === CHEST) discardedChest = true;
