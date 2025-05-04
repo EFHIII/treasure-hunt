@@ -11,6 +11,39 @@ const deckNums = [
   [62, 18, 0, 8, 12, 4, 4, 14, 1, 6, 6, 2, 6]
 ];
 
+const challenges = [
+  {
+    name: 'Rock',
+    desc: `where's the\nsand?`,
+    deck: [0, 52, 0, 8, 20, 2, 0, 0, 0, 0, 12, 1, 0]
+  },
+  {
+    name: 'Crab',
+    desc: `the hoard\nbecons`,
+    deck: [8,  0, 0,10, 22, 4, 3,48, 0]
+  },
+  {
+    name: 'Tower',
+    desc: `build a tower\n30 high`,
+    deck: [62,24, 0, 8, 12, 4, 4,14, -1, 2, 6, 2, 6]
+  },
+  {
+    name: 'Squid',
+    desc: `what is\nthis deck?`,
+    deck: [10, 2, 0, 8, 12, 2, 2, 2, 0, 15, 1, 1, 40]
+  },
+  {
+    name: 'Gold',
+    desc: `callect all\n8 treasures!`,
+    deck: [56,18, 0, 8, 12, 4, 4,14, 7, 6, 6, 2, 6]
+  },
+  {
+    name: 'Abyss',
+    desc: `Collect all\n 8 treasures!\nImpossibly hard!`,
+    deck: [341,99,0,45, 66,23,24,77, 7, 33, 33, 11, 33]
+  },
+];
+
 // chest sprite indicies
 const SAND = 0;
 const ROCK = 1;
@@ -57,6 +90,10 @@ let discardedChest = false;
 let pushing = false;
 let tutorial = true;
 let warningHard = false;
+let info = false;
+let playingSound = true;
+let fullscreen = false;
+
 
 function shuffle(array) {
   let currentIndex = array.length;
@@ -113,11 +150,25 @@ function hasTopTools(cards, n) {
   return tt >= n;
 }
 
+let dev = true;
+if(dev) {
+  tutorial = false;
+  currentLevel = 2;
+  screen = 1;
+}
+
 function setupGame() {
   deck = [];
 
-  for(let i = 0; i < deckNums[currentLevel].length; i++) {
-    deck.push(...new Array(deckNums[currentLevel][i]).fill(i));
+  if(currentLevel < 2) {
+    for(let i = 0; i < deckNums[currentLevel].length; i++) {
+      deck.push(...new Array(deckNums[currentLevel][i]).fill(i));
+    }
+  }
+  else {
+    for(let i = 0; i < challenges[currentLevel-2].deck.length; i++) {
+      deck.push(...new Array(Math.max(0,challenges[currentLevel-2].deck[i])).fill(i));
+    }
   }
 
   layers = (deck.length + 1) / gridWidth / gridHeight;
@@ -436,9 +487,14 @@ function leftHint() {
 
   generalSprite(8, 100, 0, -60, 132, 118);
 
-  centeredBigText('Hard', 8 + 65, 208);
-
-  centeredText('collect BOTH\ntreasures', 8 + 65, 180);
+  if(currentLevel === 1) {
+    centeredBigText('Hard', 8 + 65, 208);
+    centeredText('collect BOTH\ntreasures', 8 + 65, 180);
+  }
+  else {
+    centeredBigText(challenges[currentLevel-2].name, 8 + 65, 208);
+    centeredText(challenges[currentLevel-2].desc, 8 + 65, 180);
+  }
 }
 
 function hint(type) {
@@ -501,8 +557,6 @@ function winScreen() {
     });
   }
 }
-
-let info = false;
 
 function infoScreen() {
   generalSprite(105, 30, 222, -60, 272, 210);
@@ -642,9 +696,6 @@ function titleScreen() {
     hardWarning();
   }
 }
-
-let playingSound = true;
-let fullscreen = false;
 
 function runGame() {
   cursorType = 'default';
