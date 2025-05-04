@@ -268,7 +268,7 @@ function placeCard(x, y, type) {
       let good = 0;
       let nextGood = -1;
       for(let i = board[y][x].length - 1; i >= 0; i--) {
-        if(isTool(board[y][x][i])) {
+        if(isTool(board[y][x][i]) || board[y][x][i] === CHEST) {
           good++;
           nextGood = i;
         }
@@ -319,10 +319,7 @@ function chooseChoice(choice, type) {
   switch(type) {
     case SHOVEL:
     case TROWEL:
-      if(choose.choices[choice] === BOULDER) {
-        console.log(board[y][x].unshift(BOULDER));
-      }
-      else {
+      if(choose.choices[choice] !== BOULDER) {
         hand.push(choose.choices[choice]);
       }
 
@@ -334,6 +331,12 @@ function chooseChoice(choice, type) {
         for(let i = 0; i < choose.choices.length; i++) {
           if(i === choice) continue;
           if(choose.choices[i] === CHEST) discardedChest = true;
+        }
+      }
+
+      for(let i = 0; i < choose.choices.length; i++) {
+        if(choose.choices[i] === BOULDER) {
+          board[choose.y][choose.x].unshift(BOULDER);
         }
       }
       break;
@@ -577,11 +580,6 @@ function titleScreen() {
   }
 }
 
-currentLevel = 1;
-screen = 1;
-won = true;
-hand = [CHEST, CHEST];
-
 function runGame() {
   cursorType = 'default';
 
@@ -627,13 +625,21 @@ function runGame() {
     let len = choose.choices.length;
     for(let i = 0; i < len; i++) {
       let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
+
+      let thisCard = choose.choices[i];
+
+      if((i > 0 && choose.choices[i-1] === OCTOPUS) || (i < len - 1 && choose.choices[i+1] === OCTOPUS)) {
+        thisCard = INKED;
+      }
+
       btn = button(x, 100, tw, th);
       if(btn) {
         cursorType = 'pointer';
-        hint(choose.choices[i]);
+        hint(thisCard);
       }
 
-      drawSprite(choose.choices[i], x, 100 + (btn ? 2 : 0));
+
+      drawSprite(thisCard, x, 100 + (btn ? 2 : 0));
       if(btn && clicked) {
         chooseChoice(i, choose.type);
         clicked = false;
