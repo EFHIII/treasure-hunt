@@ -18,7 +18,7 @@ const challenges = [
     title: 'Rock and Stone',
     name: 'Rock',
     desc: `where's the\nsand?`,
-    deck: [0, 52, 0, 8, 20, 2, 0, 0, 0, 0, 12, 1, 0],
+    deck: [0, 56, 0, 4, 12, 2, 0, 0, 0, 0, 20, 1, 0],
     lock: 1
   },
   {
