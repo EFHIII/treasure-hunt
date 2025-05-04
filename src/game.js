@@ -153,7 +153,7 @@ function hasTopTools(cards, n) {
 let dev = true;
 if(dev) {
   tutorial = false;
-  currentLevel = 3;
+  currentLevel = 4;
   screen = 1;
 }
 
@@ -171,7 +171,7 @@ function setupGame() {
     }
   }
 
-  layers = (deck.length + 1) / gridWidth / gridHeight;
+  layers = Math.round((deck.length + 1) / gridWidth / gridHeight);
 
   let cards = deck.slice();
 
@@ -183,6 +183,7 @@ function setupGame() {
   while(!fair) {
     shuffle(cards);
     chest = Math.random() * cards.length / 4;
+    if(currentLevel === 4) chest = Infinity;
     fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
     let at = 0;
     for(let i = 0; i < layers; i++) {
@@ -839,6 +840,10 @@ function runGame() {
 
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
+      if(currentLevel === 4 && board[y][x].length >= 30) {
+        board[y][x][0] = CHEST;
+      }
+
       let stackSize = Math.min(14, board[y][x].length);
       btn = button(left + (tw + gap) * x, 199-5 + stackSize - (th + gap) * y, tw, th);
 
