@@ -1189,12 +1189,7 @@ function runGame() {
     for(let i = 0; i < hand.length; i++) {
       if(hand[i] === CHEST) treasures++;
     }
-    if(currentLevel < 2) {
-      if(treasures < currentLevel + 1) {
-        won = false;
-      }
-    }
-    else if(treasures < challenges[currentLevel].deck[CHEST]+1) {
+    if(treasures < challenges[currentLevel].deck[CHEST]+1) {
       won = false;
     }
 
