@@ -342,6 +342,7 @@ function activateCard(index, type) {
       for(let i = 0; i < hand.length; i++) {
         h = getHand(i);
         animateMove(hand[i],h.x,h.y,h.x,h.y-100);
+        if(hand[i] === CHEST) discardedChest = true;
       }
       hand = [];
       break;
