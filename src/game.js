@@ -487,9 +487,24 @@ function nearOctopus(x, y) {
 }
 
 function chooseChoice(choice, type) {
+  let g, h;
   switch(type) {
     case SHOVEL:
     case TROWEL:
+      for(let i = 0; i < choose.choices.length; i++) {
+        if(i === choice && choose.choices[i] !== BOULDER) continue;
+        switch(choose.choices[i]) {
+          case BOULDER:
+            h =  i * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
+            g = getGrid(choose.x, choose.y);
+            animateMove(choose.choices[i],h,100,g.x, g.y);
+            break;
+          default:
+            g =  i * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
+            animateMove(choose.choices[i],g,100,g + (g-240),600);
+            break;
+        }
+      }
       if(choose.choices[choice] !== BOULDER) {
         h = getHand(hand.length);
         g =  choice * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
@@ -932,7 +947,7 @@ function runGame() {
   }
 
 
-  if(screen !== 0) {
+  if(screen !== 0 && !choose) {
     generalSprite(3, 3, 498 + 34, 20, 25, 20);
 
     let btn = button(3, 3, 25, 23);
