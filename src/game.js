@@ -32,7 +32,7 @@ const challenges = [
     title: 'Tower of Babel',
     name: 'Tower',
     desc: `build a tower\n30 high`,
-    deck: [62,24, 0, 8, 12, 4, 4,14, -1, 2, 6, 2, 6],
+    deck: [56, 38, 0, 8, 12, 4, 4, 14, -1, 0, 3, 2, 3],
     lock: 1
   },
   {
