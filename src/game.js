@@ -891,9 +891,9 @@ function animateMove(sprite, x1, y1, x2, y2) {
   });
 }
 
-function animating(sprite, x, y, v1 = -1, v2 = false) {
+function animating(oldSprite, sprite, x, y, v1 = -1, v2 = false) {
   for(let i = 0; i < animations.length; i++) {
-    if(animations[i].sprite === sprite && animations[i].x2 === x && Math.abs(animations[i].y2 - y) < 10) {
+    if(animations[i].sprite === oldSprite && animations[i].x2 === x && Math.abs(animations[i].y2 - y) < 10) {
       return;
     }
   }
@@ -1112,14 +1112,14 @@ function runGame() {
 
       drawSprite(board[y][x].length === 1 ? BOTTOM : nearOctopus(x, y) ? INKED : board[y][x][1], left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, board[y][x].length - 1, true);
       if(pushing.x === x && pushing.y === y && !won) {
-        animating(thisCard, left + (tw + gap) * x, 207-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        animating(board[y][x][0], thisCard, left + (tw + gap) * x, 207-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else if(btn && !won) {
         //drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
-        animating(thisCard, left + (tw + gap) * x, 201-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        animating(board[y][x][0], thisCard, left + (tw + gap) * x, 201-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
       else {
-        animating(thisCard, left + (tw + gap) * x, 198-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        animating(board[y][x][0], thisCard, left + (tw + gap) * x, 198-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
 
       if(btn && clicked) {
@@ -1163,7 +1163,7 @@ function runGame() {
     }
 
     //drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
-    animating(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
+    animating(hand[c], thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
 
     if(btn && clicked && !won) {
       if(placing === c) {
