@@ -89,6 +89,7 @@ vec4 renderCRT(vec2 fragCoord) {
   for(int x = -1; x < 2; ++x) {
     for(int y = -1; y < 2; ++y) {
       vec4 pix = vec4(toLinear(texture(u_scene, texCoord + vec2(x, y) / gameSize).rgb), 1.0);
+      pix = clamp(pix, 0.0025, 1.0);
 
       const float LED1 = 0.120286;
       const float LED2 = 0.329268;

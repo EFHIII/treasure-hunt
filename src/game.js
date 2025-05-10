@@ -25,7 +25,7 @@ const challenges = [
     title: 'Crab Rave',
     name: 'Crab',
     desc: `the hoard\nbecons`,
-    deck: [8,  0, 0,10, 22, 4, 3,48, 0],
+    deck: [8, 0, 0, 10, 22, 4, 3, 48, 0],
     lock: 1
   },
   {
@@ -53,16 +53,16 @@ const challenges = [
     title: 'House of Gold',
     name: 'Gold',
     desc: `callect all\n8 treasures!`,
-    deck: [56,18, 0, 8, 12, 4, 4,14, 7, 6, 6, 2, 6],
+    deck: [56, 18, 0, 8, 12, 4, 4, 14, 7, 6, 6, 2, 6],
     lock: 1
   },
   {
     title: 'Infinite Abyss',
     name: 'Abyss',
     desc: `Collect all\n 8 treasures!\nImpossibly hard!`,
-    deck: [511,150,0,66, 101,33,34,115, 7, 50, 50, 20, 50],
+    deck: [511, 150, 0, 66, 101, 33, 34, 115, 7, 50, 50, 20, 50],
     lock: 1
-  },
+  }
 ];
 
 // chest sprite indicies
@@ -103,7 +103,10 @@ let choose = false;
 
 let placing = false;
 
-const mouse = {x: -1, y: -1};
+const mouse = {
+  x: -1,
+  y: -1
+};
 let clicked = false;
 
 let won = false;
@@ -125,7 +128,8 @@ function shuffle(array) {
     currentIndex--;
 
     [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
+      array[randomIndex], array[currentIndex]
+    ];
   }
 }
 
@@ -134,8 +138,8 @@ function isTool(id) {
     case SHOVEL:
     case TROWEL:
     case BOMB:
-    //case BUCKET:
-    //case DETECTOR:
+      //case BUCKET:
+      //case DETECTOR:
     case CHERRY:
       return true;
       break;
@@ -147,16 +151,16 @@ function isTool(id) {
 function hasConsecutiveEmpty(cards, chest) {
   let lastEmpty = false;
   let at = 0;
-  for(let l = 0; l < layers; l++) {
+  for (let l = 0; l < layers; l++) {
     let empty = true;
-    for(let i = 0; i < gridWidth * gridHeight; i++) {
+    for (let i = 0; i < gridWidth * gridHeight; i++) {
       at++;
-      if(at === chest) at++;
+      if (at === chest) at++;
 
-      if(isTool(cards[at])) empty = false;
+      if (isTool(cards[at])) empty = false;
     }
 
-    if(empty && lastEmpty) return true;
+    if (empty && lastEmpty) return true;
     lastEmpty = empty;
   }
   return false;
@@ -165,8 +169,8 @@ function hasConsecutiveEmpty(cards, chest) {
 function hasTopTools(cards, n) {
   let tt = 0;
   let len = cards.length;
-  for(let at = 1; at <= gridWidth * gridHeight; at++) {
-    if(isTool(cards[len - at])) tt++;
+  for (let at = 1; at <= gridWidth * gridHeight; at++) {
+    if (isTool(cards[len - at])) tt++;
   }
   return tt >= n;
 }
@@ -174,29 +178,30 @@ function hasTopTools(cards, n) {
 function setupGame() {
   deck = [];
 
-  for(let i = 0; i < challenges[currentLevel].deck.length; i++) {
-    deck.push(...new Array(Math.max(0,challenges[currentLevel].deck[i])).fill(i));
+  for (let i = 0; i < challenges[currentLevel].deck.length; i++) {
+    deck.push(...new Array(Math.max(0, challenges[currentLevel].deck[i])).fill(i));
   }
 
   layers = Math.round((deck.length + 1) / gridWidth / gridHeight);
 
   let cards = deck.slice();
 
-  if(cards.length !== layers * gridWidth * gridHeight - 1) {
+  if (cards.length !== layers * gridWidth * gridHeight - 1) {
     console.log(`error: only ${cards.length} of ${layers * gridWidth * gridHeight-1} cards`);
   }
 
-  let fair = false, chest;
-  while(!fair) {
-    while(!fair) {
+  let fair = false,
+    chest;
+  while (!fair) {
+    while (!fair) {
       shuffle(cards);
       chest = Math.random() * cards.length / 4;
-      if(currentLevel === 3) chest = Infinity;
+      if (currentLevel === 3) chest = Infinity;
       fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
       let at = 0;
-      for(let i = 0; i < layers; i++) {
-        for(let y = 0; y < gridWidth * gridHeight; y++) {
-          if(cards[at++] === CHEST && layers - i - 1 < layers / 4) {
+      for (let i = 0; i < layers; i++) {
+        for (let y = 0; y < gridWidth * gridHeight; y++) {
+          if (cards[at++] === CHEST && layers - i - 1 < layers / 4) {
             fair = false;
           }
         }
@@ -214,21 +219,20 @@ function setupGame() {
       }
     }
 
-    for(let l = 0; l < layers; l++) {
+    for (let l = 0; l < layers; l++) {
       for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
-          if(at >= chest) {
+          if (at >= chest) {
             board[y][x].push(CHEST);
             chest = Infinity;
-          }
-          else board[y][x].push(cards[at++]);
+          } else board[y][x].push(cards[at++]);
 
-          if(l === layers-1) {
+          if (l === layers - 1) {
             board[y][x].reverse();
             let lastChest = -Infinity;
-            for(let v = 0; v < board[y][x].length; v++) {
-              if(board[y][x][v] === CHEST) {
-                if(v - lastChest < 4) fair = false;
+            for (let v = 0; v < board[y][x].length; v++) {
+              if (board[y][x][v] === CHEST) {
+                if (v - lastChest < 4) fair = false;
                 lastChest = v;
               }
             }
@@ -248,25 +252,25 @@ function setupGame() {
 setupGame();
 
 function forAllNeighbors(x, y, fn) {
-  for(let X = -1; X < 2; X++) {
-    if(x + X < 0 || x + X >= gridWidth) continue;
-    for(let Y = -1; Y < 2; Y++) {
-      if(y + Y < 0 || y + Y >= gridHeight) continue;
-      fn(board[y+Y][x+X], X, Y);
+  for (let X = -1; X < 2; X++) {
+    if (x + X < 0 || x + X >= gridWidth) continue;
+    for (let Y = -1; Y < 2; Y++) {
+      if (y + Y < 0 || y + Y >= gridHeight) continue;
+      fn(board[y + Y][x + X], X, Y);
     }
   }
 }
 
 function checkNeighbors(x, y) {
-  if(pushing) return board[y][x].length >= board[pushing.y][pushing.x].length || (pushing.x - x < -1 || pushing.y - y < -1 || pushing.x - x > 1 || pushing.y - y > 1);
+  if (pushing) return board[y][x].length >= board[pushing.y][pushing.x].length || (pushing.x - x < -1 || pushing.y - y < -1 || pushing.x - x > 1 || pushing.y - y > 1);
 
   let height = board[y][x].length;
 
-  for(let X = -1; X < 2; X++) {
-    if(x + X < 0 || x + X >= gridWidth) continue;
-    for(let Y = -1; Y < 2; Y++) {
-      if(y + Y < 0 || y + Y >= gridHeight) continue;
-      if(board[y+Y][x+X].length - height > 0) return true;
+  for (let X = -1; X < 2; X++) {
+    if (x + X < 0 || x + X >= gridWidth) continue;
+    for (let Y = -1; Y < 2; Y++) {
+      if (y + Y < 0 || y + Y >= gridHeight) continue;
+      if (board[y + Y][x + X].length - height > 0) return true;
     }
   }
 
@@ -275,34 +279,44 @@ function checkNeighbors(x, y) {
 
 function getGrid(x, y) {
   let stackSize = board[y] && board[y][x] ? Math.min(14, board[y][x].length) : 0;
-  return {x:left + (tw + gap) * x, y:199-5 + stackSize - (th + gap) * y};
+  return {
+    x: left + (tw + gap) * x,
+    y: 199 - 5 + stackSize - (th + gap) * y
+  };
 }
 
 function getHand(c) {
-  return {x:c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2, y:5};
+  return {
+    x: c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2,
+    y: 5
+  };
 }
 
 function pickupCard(x, y, type) {
-  if((hand.length >= maxHand && type !== BOULDER) || checkNeighbors(x, y)) return;
+  if ((hand.length >= maxHand && type !== BOULDER) || checkNeighbors(x, y)) return;
 
-  if(type !== CRAB && type !== CHEST && type !== BOULDER) playSound(0);
+  if (type !== CRAB && type !== CHEST && type !== BOULDER) playSound(0);
 
-  let g, h;
+  let g = getGrid(x, y);
+  let h = getHand(hand.length);
 
-  switch(type) {
-    case CRAB: break;
+  switch (type) {
+    case CRAB:
+      break;
     case BOULDER:
-        playSound(4);
-      pushing = {type, x, y};
+      playSound(4);
+      pushing = {
+        type,
+        x,
+        y
+      };
       break;
     case CHEST:
       playSound(7);
       // WIN condition
       won = true;
 
-      g = getGrid(x, y);
-      h = getHand(hand.length);
-      animateMove(type, g.x,g.y,h.x,h.y);
+      animateMove(type, g.x, g.y, h.x, h.y);
 
       hand.push(type);
       board[y][x].shift();
@@ -312,9 +326,8 @@ function pickupCard(x, y, type) {
       forAllNeighbors(x, y, b => b.unshift(SAND));
       break;
     default:
-      g = getGrid(x, y);
-      h = getHand(hand.length);
-      animateMove(type, g.x,g.y,h.x,h.y);
+      animateMove(BOTTOM, h.x, h.y, h.x, h.y);
+      animateMove(type, g.x, g.y, h.x, h.y);
 
       hand.push(type);
       board[y][x].shift();
@@ -322,7 +335,7 @@ function pickupCard(x, y, type) {
 }
 
 function activateCard(index, type) {
-  switch(type) {
+  switch (type) {
     case SAND:
       return;
     case ROCK:
@@ -339,10 +352,20 @@ function activateCard(index, type) {
       pushing = false;
       break;
     case BUCKET:
-      for(let i = 0; i < hand.length; i++) {
-        h = getHand(i);
-        animateMove(hand[i],h.x,h.y,h.x,h.y-100);
-        if(hand[i] === CHEST) discardedChest = true;
+      playSound(3);
+      for (let i = 0; i < hand.length; i++) {
+        let h = getHand(i);
+
+        let val = hand[i];
+        if(i > 0 && hand[i-1] === OCTOPUS && val !== OCTOPUS) {
+          val = INKED;
+        }
+        if(i < hand.length - 1 && hand[i + 1] === OCTOPUS && val !== OCTOPUS) {
+          val = INKED;
+        }
+
+        animateMove(val, h.x, h.y, h.x, h.y - 100);
+        if (hand[i] === CHEST) discardedChest = true;
       }
       hand = [];
       break;
@@ -352,82 +375,128 @@ function activateCard(index, type) {
 }
 
 function slideLeft(c) {
-  for(let i = c+1; i < hand.length; i++) {
-    h1 = getHand(i);
-    h2 = getHand(i-1);
-    animateMove(hand[i],h1.x,h1.y,h2.x,h2.y);
+  for (let i = c + 1; i < hand.length; i++) {
+    let h1 = getHand(i);
+    let h2 = getHand(i - 1);
+    let val = hand[i];
+    if(i - 1 !== c && i > 0 && hand[i-1] === OCTOPUS && val !== OCTOPUS) {
+      val = INKED;
+    }
+    if(i + 1 !== c && i < hand.length - 1 && hand[i + 1] === OCTOPUS && val !== OCTOPUS) {
+      val = INKED;
+    }
+    if(i - 1 === c && i > 1 && hand[i-2] === OCTOPUS && val !== OCTOPUS) {
+      val = INKED;
+    }
+    animateMove(val, h1.x, h1.y, h2.x, h2.y);
   }
 }
 
 function placeCard(x, y, type, c) {
+  if (c !== undefined) slideLeft(c);
 
-  if(c) slideLeft(c);
+  let g = getGrid(x, y);
+  let h = getHand(c);
 
-  let g, h;
-
-  switch(type) {
+  switch (type) {
     case SAND:
       return;
     case ROCK:
     case CRAB:
     case OCTOPUS:
-      g = getGrid(x, y);
-      h = getHand(c);
-      animateMove(type,h.x,h.y,g.x,g.y);
+      animateMove(type, h.x, h.y, g.x, g.y);
 
       board[y][x].unshift(type);
       playSound(5);
       break;
     case CHEST:
-      g = getGrid(x, y);
-      h = getHand(c);
-      animateMove(type,h.x,h.y,g.x,g.y);
+      animateMove(type, h.x, h.y, g.x, g.y);
 
       board[y][x].unshift(type);
       playSound(6);
       break;
     case SHOVEL:
       playSound(5);
-      if(board[y][x].length === 0) return;
-      choose = {type, x, y, choices: board[y][x].splice(0, 4)};
+      if (board[y][x].length === 0) return;
+      animateMove(type, h.x, h.y, h.x, h.y - 100);
+      choose = {
+        type,
+        x,
+        y,
+        choices: board[y][x].splice(0, 4)
+      };
+      for (let i = 0; i < choose.choices.length; i++) {
+        let len = choose.choices.length;
+        let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
+        let val = choose.choices[i];
+        if(i > 0 && val !== OCTOPUS && choose.choices[i-1] === OCTOPUS) {
+          val = INKED;
+        }
+        if(i < len - 1 && val !== OCTOPUS && choose.choices[i+1] === OCTOPUS) {
+          val = INKED;
+        }
+        animateMove(val, g.x, g.y, x, 100);
+      }
       break;
     case TROWEL:
       playSound(5);
-      if(board[y][x].length === 0) return;
-      choose = {type, x, y, choices: board[y][x].splice(0, 2)};
+      animateMove(type, h.x, h.y, h.x, h.y - 100);
+      if (board[y][x].length === 0) return;
+      choose = {
+        type,
+        x,
+        y,
+        choices: board[y][x].splice(0, 2)
+      };
+      for (let i = 0; i < choose.choices.length; i++) {
+        let len = choose.choices.length;
+        let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
+        let val = choose.choices[i];
+        if(i > 0 && val !== OCTOPUS && choose.choices[i-1] === OCTOPUS) {
+          val = INKED;
+        }
+        if(i < len - 1 && val !== OCTOPUS && choose.choices[i+1] === OCTOPUS) {
+          val = INKED;
+        }
+        animateMove(val, g.x, g.y, x, 100);
+      }
       break;
     case BOMB:
       playSound(1);
 
       forAllNeighbors(x, y, (b, X, Y) => {
-        g = getGrid(x+X*10, y+Y*10);
+        g = getGrid(x + X * 10, y + Y * 10);
         h = getGrid(x, y);
-        animateMove(b[0],h.x,h.y,g.x,g.y);
+        if (X === 0 && Y === 0) {
+          let s = Math.random();
+          g = {
+            x: h.x + Math.sin(s) * 300,
+            y: h.y + Math.cos(s) * 300
+          };
+        }
+        animateMove(b[0], h.x, h.y, g.x, g.y);
 
-        if(b[0] === CHEST) discardedChest = true;
+        if (b[0] === CHEST) discardedChest = true;
         b.shift();
       });
       break;
     case DETECTOR:
       playSound(5);
 
-      g = getGrid(x, y);
-      h = getHand(c);
-      animateMove(type,h.x,h.y,g.x,g.y);
+      animateMove(type, h.x, h.y, g.x, g.y);
 
-      if(board[y][x].length === 0) return;
+      if (board[y][x].length === 0) return;
       let good = 0;
       let nextGood = -1;
-      for(let i = board[y][x].length - 1; i >= 0; i--) {
-        if(isTool(board[y][x][i]) || board[y][x][i] === BUCKET || board[y][x][i] === DETECTOR || board[y][x][i] === CHEST) {
+      for (let i = board[y][x].length - 1; i >= 0; i--) {
+        if (isTool(board[y][x][i]) || board[y][x][i] === BUCKET || board[y][x][i] === DETECTOR || board[y][x][i] === CHEST) {
           good++;
           nextGood = i;
         }
       }
-      if(nextGood >= 0) {
+      if (nextGood >= 0) {
         info = `\nGood cards in stack\n${good}\n\nNext good card at\n${board[y][x].length - nextGood}`;
-      }
-      else {
+      } else {
         info = `\nGood cards in stack\n${good}`;
       }
       break;
@@ -435,33 +504,43 @@ function placeCard(x, y, type, c) {
       playSound(2);
 
       forAllNeighbors(x, y, (b, X, Y) => {
-        g = getGrid(x+X*20, y+Y*20);
-        h = getGrid(x, y);
-        animateMove(b[0],h.x,h.y,g.x,g.y);
+        h = getGrid(x + X * 10, y + Y * 10);
+        if (X === 0 && Y === 0) {
+          let s = Math.random();
+          h = {
+            x: g.x + Math.sin(s) * 300,
+            y: g.y + Math.cos(s) * 300
+          };
+        }
+        animateMove(b[0], g.x, g.y, h.x, h.y);
 
-        g = getGrid(x+X*10, y+Y*10);
-        h = getGrid(x, y);
-        animateMove(b[1],h.x,h.y,g.x,g.y);
-
-        if(b[0] === CHEST) discardedChest = true;
+        if (b[0] === CHEST) discardedChest = true;
         b.shift();
 
-        if(b[0] === CHEST) discardedChest = true;
+        h = getGrid(x + X * 10, y + Y * 10);
+        if (X === 0 && Y === 0) {
+          let s = Math.random();
+          h = {
+            x: g.x + Math.sin(s) * 300,
+            y: g.y + Math.cos(s) * 300
+          };
+        }
+        animateMove(b[0], g.x, g.y, h.x, h.y);
+
+        if (b[0] === CHEST) discardedChest = true;
         b.shift();
       });
       break;
     case BOULDER:
-      if(!checkNeighbors(x, y)) {
+      if (!checkNeighbors(x, y)) {
         playSound(5);
 
         h = getGrid(pushing.x, pushing.y);
-        g = getGrid(x, y);
-        animateMove(type,h.x,h.y,g.x,g.y);
+        animateMove(nearOctopus(x, y) ? INKED: type, h.x, h.y, g.x, g.y);
 
         board[y][x].unshift(type);
         board[pushing.y][pushing.x].shift();
-      }
-      else {
+      } else {
         playSound(3);
       }
       pushing = false;
@@ -474,13 +553,13 @@ function placeCard(x, y, type, c) {
 }
 
 function nearOctopus(x, y) {
-  for(let X = x -1; X < x + 2; X++) {
-    if(X < 0 || X >= gridWidth) continue;
-    for(let Y = y-1; Y < y + 2; Y++) {
-      if(Y < 0 || Y >= gridHeight) continue;
-      if(X === x && Y === y) continue;
+  for (let X = x - 1; X < x + 2; X++) {
+    if (X < 0 || X >= gridWidth) continue;
+    for (let Y = y - 1; Y < y + 2; Y++) {
+      if (Y < 0 || Y >= gridHeight) continue;
+      if (X === x && Y === y) continue;
 
-      if(board[Y][X].length > 0 && board[Y][X][0] === OCTOPUS) return true;
+      if (board[Y][X].length > 0 && board[Y][X][0] === OCTOPUS) return true;
     }
   }
   return false;
@@ -488,46 +567,45 @@ function nearOctopus(x, y) {
 
 function chooseChoice(choice, type) {
   let g, h;
-  switch(type) {
+  switch (type) {
     case SHOVEL:
     case TROWEL:
-      for(let i = 0; i < choose.choices.length; i++) {
-        if(i === choice && choose.choices[i] !== BOULDER) continue;
-        switch(choose.choices[i]) {
+      for (let i = 0; i < choose.choices.length; i++) {
+        if (i === choice && choose.choices[i] !== BOULDER) continue;
+        switch (choose.choices[i]) {
           case BOULDER:
-            h =  i * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
+            h = i * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
             g = getGrid(choose.x, choose.y);
-            animateMove(choose.choices[i],h,100,g.x, g.y);
+            animateMove(choose.choices[i], h, 100, g.x, g.y);
             break;
           default:
-            g =  i * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
-            animateMove(choose.choices[i],g,100,g + (g-240),600);
+            g = i * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
+            animateMove(choose.choices[i], g, 100, g + (g - 240), 600);
             break;
         }
       }
-      if(choose.choices[choice] !== BOULDER) {
+      if (choose.choices[choice] !== BOULDER) {
         h = getHand(hand.length);
-        g =  choice * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
-        animateMove(choose.choices[choice],g,100,h.x,h.y);
+        g = choice * (tw + gap) + mid - (tw * choose.choices.length + gap * (choose.choices.length - 1)) / 2;
+        animateMove(choose.choices[choice], g, 100, h.x, h.y);
 
         hand.push(choose.choices[choice]);
       }
 
-      if(choose.choices[choice] === CHEST) {
+      if (choose.choices[choice] === CHEST) {
         // WIN condition
         won = true;
         playSound(7);
-      }
-      else {
+      } else {
         playSound(5);
-        for(let i = 0; i < choose.choices.length; i++) {
-          if(i === choice) continue;
-          if(choose.choices[i] === CHEST) discardedChest = true;
+        for (let i = 0; i < choose.choices.length; i++) {
+          if (i === choice) continue;
+          if (choose.choices[i] === CHEST) discardedChest = true;
         }
       }
 
-      for(let i = 0; i < choose.choices.length; i++) {
-        if(choose.choices[i] === BOULDER) {
+      for (let i = 0; i < choose.choices.length; i++) {
+        if (choose.choices[i] === BOULDER) {
           board[choose.y][choose.x].unshift(BOULDER);
         }
       }
@@ -539,74 +617,75 @@ function chooseChoice(choice, type) {
 }
 
 function button(x, y, w, h) {
-  return mouse.x >= x && mouse.x < x+w && mouse.y >= y && mouse.y < y + h;
+  return mouse.x >= x && mouse.x < x + w && mouse.y >= y && mouse.y < y + h;
 }
 
 let cursorType = 'default';
 
 function cursor(style) {
-  postMessage({type: 'cursor', style});
+  postMessage({
+    type: 'cursor',
+    style
+  });
 }
 
-const hints = [
-  {
-    name: `Sand`,
-    text: `Useless\nCannot be played`
-  }, {
-    name: 'Rock',
-    text: `Obstacle\nDrop by playing it`
-  }, {
-    name: `Mine`,
-    text: `Does not exist`
-  }, {
-    name: `Shovel`,
-    text: `Dig up 4 cards\nPick one to keep\nDiscard the rest`
-  }, {
-    name: `Trowel`,
-    text: `Dig up 2 cards\nPick one to keep\nDiscard the other`
-  }, {
-    name: `Bomb`,
-    text: `Destroy any\nchosen card\nand the 8\nsurrounding cards`
-  }, {
-    name: `Bucket`,
-    text: `Discard your\nwhole hand`
-  }, {
-    name: `Crab`,
-    text: `Can't be picked\nup by hand\nDrop by playing it`
-  }, {
-    name: `Treasure`,
-    text: `Huzzah!\nCollect ${currentLevel === 0 ? 'it' : 'BOTH\n'} to win!\n\nDrop by playing it`
-  }, {
-    name: `Detector`,
-    text: `Tells how many\ngood cards are\nin the stack\nand how deep\nthe nearest is`
-  }, {
-    name: `Boulder`,
-    text: `Too big to discard\nor pick up\nCan be pushed\nonto lower\nsurrounding stacks`
-  }, {
-    name: `Cherry`,
-    text: `Destorys the top\n2 cards of a\nstack and its 8\nsurrounding stacks`
-  }, {
-    name: `Octopus`,
-    text: `Inks the\nsurrounding cards\n\nObscures what\nthey are`
-  }, {
-    name: `Inked`,
-    text: `What is this card?`
-  }
-];
+const hints = [{
+  name: `Sand`,
+  text: `Useless\nCannot be played`
+}, {
+  name: 'Rock',
+  text: `Obstacle\nDrop by playing it`
+}, {
+  name: `Mine`,
+  text: `Does not exist`
+}, {
+  name: `Shovel`,
+  text: `Dig up 4 cards\nPick one to keep\nDiscard the rest`
+}, {
+  name: `Trowel`,
+  text: `Dig up 2 cards\nPick one to keep\nDiscard the other`
+}, {
+  name: `Bomb`,
+  text: `Destroy any\nchosen card\nand the 8\nsurrounding cards`
+}, {
+  name: `Bucket`,
+  text: `Discard your\nwhole hand`
+}, {
+  name: `Crab`,
+  text: `Can't be picked\nup by hand\nDrop by playing it`
+}, {
+  name: `Treasure`,
+  text: `Huzzah!\nCollect ${currentLevel === 0 ? 'it' : 'BOTH\n'} to win!\n\nDrop by playing it`
+}, {
+  name: `Detector`,
+  text: `Tells how many\ngood cards are\nin the stack\nand how deep\nthe nearest is`
+}, {
+  name: `Boulder`,
+  text: `Too big to discard\nor pick up\nCan be pushed\nonto lower\nsurrounding stacks`
+}, {
+  name: `Cherry`,
+  text: `Destorys the top\n2 cards of a\nstack and its 8\nsurrounding stacks`
+}, {
+  name: `Octopus`,
+  text: `Inks the\nsurrounding cards\n\nObscures what\nthey are`
+}, {
+  name: `Inked`,
+  text: `What is this card?`
+}];
 
 function leftHint() {
-  if(won) return;
+  if (won) return;
 
   generalSprite(8, 100, 0, -60, 132, 118);
 
-  if(currentLevel > 0) {
+  if (currentLevel > 0) {
     centeredBigText(challenges[currentLevel].name, 8 + 65, 208);
     centeredText(challenges[currentLevel].desc, 8 + 65, 180);
   }
 }
 
 function hint(type) {
-  if(won || type === undefined || type >= hints.length) return;
+  if (won || type === undefined || type >= hints.length) return;
 
   generalSprite(338, 100, 0, -60, 132, 118);
 
@@ -616,45 +695,42 @@ function hint(type) {
 }
 
 function textButton(txt, x, y, callback) {
-  let btn = button(x - bigTextWidth(txt) / 2, y-30, bigTextWidth(txt), 30);
-  if(!btn) {
+  let btn = button(x - bigTextWidth(txt) / 2, y - 30, bigTextWidth(txt), 30);
+  if (!btn) {
     centeredBigText(txt, x, y);
-  }
-  else {
+  } else {
     cursorType = 'pointer';
     callback(x, y);
   }
 }
 
 function smallTextButton(txt, x, y, callback) {
-  let btn = button(x - textWidth(txt) / 2, y-15, textWidth(txt), 15);
-  if(!btn) {
+  let btn = button(x - textWidth(txt) / 2, y - 15, textWidth(txt), 15);
+  if (!btn) {
     centeredText(txt, x, y);
-  }
-  else {
+  } else {
     cursorType = 'pointer';
     callback(x, y);
   }
 }
 
 function winScreen() {
-  if(currentLevel === 0 && challenges[0].lock === 0) {
+  if (currentLevel === 0 && challenges[0].lock === 0) {
     challenges[1].lock = 0;
     challenges[2].lock = 0;
     challenges[3].lock = 0;
-  }
-  else if(currentLevel === 4 && challenges[4].lock === 0) {
+  } else if (currentLevel === 4 && challenges[4].lock === 0) {
     challenges[5].lock = 0;
     challenges[6].lock = 0;
   }
   challenges[currentLevel].lock = -1;
 
   let beaten = 0;
-  for(let i = 0; i < challenges.length; i++) {
-    if(challenges[i].lock === -1) beaten++;
+  for (let i = 0; i < challenges.length; i++) {
+    if (challenges[i].lock === -1) beaten++;
   }
 
-  if(beaten >= 5 && challenges[7].lock === 1) {
+  if (beaten >= 5 && challenges[7].lock === 1) {
     challenges[7].lock = 0;
   }
 
@@ -665,30 +741,29 @@ function winScreen() {
 
   generalSprite(202, 100, 132, -60, 80, 60);
 
-  if(currentLevel === challenges.length - 1) {
-    textButton(`Play again`, 174 + 65, 80, (x ,y) => {
+  if (currentLevel === challenges.length - 1) {
+    textButton(`Play again`, 174 + 65, 80, (x, y) => {
       centeredBigText('Play again', x, y + Math.sin(performance.now() / 200) * 10);
 
-      if(clicked) {
+      if (clicked) {
         clicked = false;
         setupGame();
       }
     });
-  }
-  else {
-    textButton(`Play again`, 182, 80, (x ,y) => {
+  } else {
+    textButton(`Play again`, 182, 80, (x, y) => {
       centeredBigText('Play again', x, y + Math.sin(performance.now() / 200) * 10);
 
-      if(clicked) {
+      if (clicked) {
         clicked = false;
         setupGame();
       }
     });
 
-    textButton(`Levels`, 176+130, 80, (x ,y) => {
+    textButton(`Levels`, 176 + 130, 80, (x, y) => {
       centeredBigText('Levels', x, y + Math.sin(x + performance.now() / 200) * 10);
 
-      if(clicked) {
+      if (clicked) {
         screen = 2;
         clicked = false;
       }
@@ -703,7 +778,7 @@ function infoScreen() {
 
   cursorType = 'pointer';
 
-  if(clicked) {
+  if (clicked) {
     clicked = false;
     info = false;
     won = false;
@@ -721,7 +796,7 @@ function loseScreen() {
   centeredBigText(`Play again`, 174 + 65, 80);
   cursorType = 'pointer';
 
-  if(clicked) {
+  if (clicked) {
     clicked = false;
     setupGame();
   }
@@ -735,19 +810,18 @@ function loseScreenB() {
 
   generalSprite(196, 126, 132, -154, 90, 60);
 
-  if(true) {
+  if (true) {
     centeredBigText(`Play again`, 174 + 65, 80);
     cursorType = 'pointer';
 
-    if(clicked) {
+    if (clicked) {
       clicked = false;
       setupGame();
     }
-  }
-  else {
+  } else {
     centeredText(`Play again`, 174, 80);
 
-    centeredText(`Next level`, 174+130, 80);
+    centeredText(`Next level`, 174 + 130, 80);
   }
 }
 
@@ -756,10 +830,10 @@ function hardWarning() {
 
   centeredBigText(`Go to level select?`, 174 + 69, 218);
 
-  textButton('No', 240-50, 100, (x, y) => {
-    centeredBigText('No', x, y + Math.sin(performance.now()/200)*10);
+  textButton('No', 240 - 50, 100, (x, y) => {
+    centeredBigText('No', x, y + Math.sin(performance.now() / 200) * 10);
 
-    if(clicked) {
+    if (clicked) {
       currentLevel = 0;
       clicked = false;
       screen = 1;
@@ -767,10 +841,10 @@ function hardWarning() {
     }
   });
 
-  textButton('Yes', 240+50, 100, (x, y) => {
-    centeredBigText('Yes', x, y + Math.sin(performance.now()/200)*10);
+  textButton('Yes', 240 + 50, 100, (x, y) => {
+    centeredBigText('Yes', x, y + Math.sin(performance.now() / 200) * 10);
 
-    if(clicked) {
+    if (clicked) {
       clicked = false;
       screen = 2;
     }
@@ -778,7 +852,7 @@ function hardWarning() {
 }
 
 function titleScreen() {
-  if(warningHard) {
+  if (warningHard) {
     hardWarning();
   }
 
@@ -792,32 +866,30 @@ function titleScreen() {
 
   let btn = button(240 - bigTextWidth('Play') / 2, 90, bigTextWidth('Play'), 30);
 
-  if(btn) {
+  if (btn) {
     cursorType = 'pointer';
     centeredBigText('Play', 240 + Math.sin(performance.now() / 200) * 10, 120);
 
-    if(clicked) {
+    if (clicked) {
       currentLevel = 0;
       clicked = false;
       screen = 1;
       setupGame();
     }
-  }
-  else {
+  } else {
     centeredBigText('Play', 240, 120);
   }
 
   btn = button(202, 130, 75, 60);
 
-  if(btn) {
+  if (btn) {
     generalSprite(202, 130, 132, -60, 75, 60);
     cursorType = 'pointer';
-    if(clicked) {
+    if (clicked) {
       warningHard = true;
       clicked = false;
     }
-  }
-  else {
+  } else {
     generalSprite(203, 130, 0, -179, 75, 60);
   }
 
@@ -825,15 +897,17 @@ function titleScreen() {
 
   btn = button(330, 50, 30, 18);
 
-  if(btn) {
+  if (btn) {
     cursorType = 'pointer';
-    if(clicked) {
-      postMessage({type:'discord'});
+    if (clicked) {
+      postMessage({
+        type: 'discord'
+      });
       clicked = false;
     }
   }
 
-  if(warningHard) {
+  if (warningHard) {
     hardWarning();
   }
 }
@@ -845,12 +919,12 @@ function levelSelect() {
 
   centeredBigText(`Level Select`, 174 + 65, 218);
 
-  for(let i = 0; i < challenges.length; i++) {
-    smallTextButton(`${challenges[i].lock===0?'NEW! ':''}${challenges[i].lock===1?'Locked':challenges[i].title}`, 240, 185-17*i, (x ,y) => {
+  for (let i = 0; i < challenges.length; i++) {
+    smallTextButton(`${challenges[i].lock===0?'NEW! ':''}${challenges[i].lock===1?'Locked':challenges[i].title}`, 240, 185 - 17 * i, (x, y) => {
 
-      centeredText(`${challenges[i].lock===0?'NEW! ':''}${challenges[i].lock===1?'Locked':challenges[i].title}`, x+ Math.sin(performance.now() / 200) * 10 * (challenges[i].lock===1?0:1), y );
+      centeredText(`${challenges[i].lock===0?'NEW! ':''}${challenges[i].lock===1?'Locked':challenges[i].title}`, x + Math.sin(performance.now() / 200) * 10 * (challenges[i].lock === 1 ? 0 : 1), y);
 
-      if(challenges[i].lock !== 1 && clicked) {
+      if (challenges[i].lock !== 1 && clicked) {
         clicked = false;
         screen = 1;
         currentLevel = i;
@@ -868,9 +942,9 @@ function pointOnBezier(x1, y1, c1x, c1y, c2x, c2y, x2, y2, x, resolution = 20) {
   let at = 0.5;
   let inc = 0.25;
   let b;
-  for(let i = 0; i < resolution; i++) {
+  for (let i = 0; i < resolution; i++) {
     b = cubicBezier(x1, c1x, c2x, x2, at);
-    if(b > x) at -= inc;
+    if (b > x) at -= inc;
     else at += inc;
     inc /= 2;
   }
@@ -899,17 +973,25 @@ function easeValue(atTime, fromTime, toTime, fromValue, toValue, easeA, easeB, b
 }
 
 let animations = [];
-function animateMove(sprite, x1, y1, x2, y2) {
+
+function animateMove(fromSprite, x1, y1, x2, y2, newSprite = false) {
+  let toSprite = newSprite ? newSprite : fromSprite;
+
   animations.push({
-    sprite, x1, y1, x2, y2,
+    fromSprite,
+    toSprite,
+    x1,
+    y1,
+    x2,
+    y2,
     started: performance.now(),
     duration: 300,
   });
 }
 
-function animating(oldSprite, sprite, x, y, v1 = -1, v2 = false) {
-  for(let i = 0; i < animations.length; i++) {
-    if(animations[i].sprite === oldSprite && animations[i].x2 === x && Math.abs(animations[i].y2 - y) < 10) {
+function animating(sprite, x, y, v1 = -1, v2 = false) {
+  for (let i = 0; i < animations.length; i++) {
+    if (animations[i].toSprite === sprite && animations[i].x2 === x && Math.abs(animations[i].y2 - y) < 10) {
       return;
     }
   }
@@ -917,44 +999,95 @@ function animating(oldSprite, sprite, x, y, v1 = -1, v2 = false) {
 }
 
 function animate() {
-  for(let i = 0; i < animations.length; i++) {
+  for (let i = 0; i < animations.length; i++) {
     let an = animations[i];
-    let x = easeValue(performance.now(), an.started, an.started+an.duration, an.x1, an.x2, 1, 1);
-    let y = easeValue(performance.now(), an.started, an.started+an.duration, an.y1, an.y2, 1, 1);
-    drawSprite(an.sprite, x, y);
 
-    if(performance.now()-an.duration > an.started) {
+    if(an.x1 === an.x2 && an.y1 === an.y2) {
+      drawSprite(an.fromSprite, an.x1, an.y1);
+    }
+    else {
+      let x = easeValue(performance.now(), an.started, an.started + an.duration, an.x1, an.x2, 1, 1);
+      let y = easeValue(performance.now(), an.started, an.started + an.duration, an.y1, an.y2, 1, 1);
+      drawSprite(an.fromSprite, x, y);
+    }
+
+    if (performance.now() - an.duration > an.started) {
       animations.splice(i, 1);
       i--;
     }
   }
 }
 
+function drawHand(place = false) {
+  for (let c = 0; c < 8; c++) {
+    let x = c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2;
+
+    drawSprite(BOTTOM, x - 2, 5 - 2);
+    drawSprite(BOTTOM, x + 2, 5 - 2);
+    drawSprite(BOTTOM, x - 2, 5 + 2);
+    drawSprite(BOTTOM, x + 2, 5 + 2);
+  }
+
+  for (let c = 0; c < hand.length; c++) {
+    let x = c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2;
+
+    let thisCard = hand[c];
+    if ((c > 0 && hand[c - 1] === OCTOPUS) || (c < hand.length - 1 && hand[c + 1] === OCTOPUS)) {
+      thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
+    }
+
+    btn = button(x, 5, tw, th);
+
+    if (btn) {
+      cursorType = 'pointer';
+
+      hint(thisCard);
+    }
+
+    //drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
+    animating(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
+
+    if (place && btn && clicked && !won) {
+      if (placing === c) {
+        placing = false;
+        playSound(3);
+      } else activateCard(c, hand[c]);
+      clicked = false;
+    }
+  }
+
+  animate();
+}
+
 function runGame() {
   cursorType = 'default';
 
-  generalSprite(460, 3, 498 + 17 * (fullscreen?1:0), 20, 17, 20);
+  const runAgain = clicked;
+
+  generalSprite(460, 3, 498 + 17 * (fullscreen ? 1 : 0), 20, 17, 20);
 
   let btn = button(460, 3, 23, 23);
 
-  if(btn) {
+  if (btn) {
     cursorType = 'pointer';
-    if(clicked) {
+    if (clicked) {
       fullscreen = !fullscreen;
-      postMessage({type:'fullscreen'});
+      postMessage({
+        type: 'fullscreen'
+      });
       clicked = false;
     }
   }
 
 
-  if(screen !== 0 && !choose) {
+  if (screen !== 0 && !choose) {
     generalSprite(3, 3, 498 + 34, 20, 25, 20);
 
     let btn = button(3, 3, 25, 23);
 
-    if(btn) {
+    if (btn) {
       cursorType = 'pointer';
-      if(clicked) {
+      if (clicked) {
         screen = 0;
         warningHard = false;
         clicked = false;
@@ -963,25 +1096,25 @@ function runGame() {
   }
 
 
-  generalSprite(3, 245, 495-99, 23, 23, 23);
+  generalSprite(3, 245, 495 - 99, 23, 23, 23);
 
   btn = button(3, 245, 23, 23);
 
-  if(btn) {
+  if (btn) {
     cursorType = 'pointer';
-    if(clicked) {
+    if (clicked) {
       shader = !shader;
       clicked = false;
     }
   }
 
-  generalSprite(27, 245, 495-99+23+(playingSound?0:27), 23, 27, 23);
+  generalSprite(27, 245, 495 - 99 + 23 + (playingSound ? 0 : 27), 23, 27, 23);
 
   btn = button(27, 245, 23, 23);
 
-  if(btn) {
+  if (btn) {
     cursorType = 'pointer';
-    if(clicked) {
+    if (clicked) {
       playingSound = !playingSound;
       clicked = false;
       playSound(-1);
@@ -989,28 +1122,32 @@ function runGame() {
   }
 
 
-  switch(screen) {
+  switch (screen) {
     case 0:
       titleScreen();
       cursor(cursorType);
 
       clicked = false;
+
+      if(runAgain) runGame();
       return;
     case 2:
       levelSelect();
       cursor(cursorType);
 
       clicked = false;
+
+      if(runAgain) runGame();
       return;
   }
 
-  generalSprite(453, 245, 495-23, 23, 23, 23);
+  generalSprite(453, 245, 495 - 23, 23, 23, 23);
 
   btn = button(453, 245, 23, 23);
 
-  if(btn) {
+  if (btn) {
     cursorType = 'pointer';
-    if(clicked) {
+    if (clicked) {
       setupGame();
       clicked = false;
     }
@@ -1018,41 +1155,43 @@ function runGame() {
 
   textButton('?', 60, 267, (x, y) => {
     centeredBigText('!', x, y);
-    if(clicked) {
+    if (clicked) {
       tutorial = true;
       clicked = false;
     }
   });
 
-  if(currentLevel > 0) {
+  if (currentLevel > 0) {
     leftHint();
   }
 
-  if(choose) {
+  if (choose) {
+    drawHand();
+
     hint(choose.type);
 
     let len = choose.choices.length;
     let allBoulders = true;
-    for(let i = 0; i < len; i++) {
-      if(choose.choices[i] !== BOULDER) allBoulders = false;
+    for (let i = 0; i < len; i++) {
+      if (choose.choices[i] !== BOULDER) allBoulders = false;
     }
-    for(let i = 0; i < len; i++) {
+    for (let i = 0; i < len; i++) {
       let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
 
       let thisCard = choose.choices[i];
 
-      if((i > 0 && choose.choices[i-1] === OCTOPUS) || (i < len - 1 && choose.choices[i+1] === OCTOPUS)) {
+      if ((i > 0 && choose.choices[i - 1] === OCTOPUS) || (i < len - 1 && choose.choices[i + 1] === OCTOPUS)) {
         thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
       }
 
       btn = button(x, 100, tw, th);
-      if(btn) {
+      if (btn) {
         cursorType = 'pointer';
         hint(thisCard);
       }
 
-      drawSprite(thisCard, x, 100 + (btn ? 2 : 0), -1, (!allBoulders && choose.choices[i] === BOULDER));
-      if(btn && clicked && (allBoulders || choose.choices[i] !== BOULDER)) {
+      animating(thisCard, x, 100 + (btn ? 2 : 0), -1, (!allBoulders && choose.choices[i] === BOULDER));
+      if (btn && clicked && (allBoulders || choose.choices[i] !== BOULDER)) {
         chooseChoice(i, choose.type);
         clicked = false;
         break;
@@ -1061,99 +1200,92 @@ function runGame() {
 
     cursor(cursorType);
     clicked = false;
+
+    if(runAgain) runGame();
     return;
   }
 
-  if(tutorial) {
+  if (tutorial) {
     won = true;
     cursorType = 'pointer';
-    if(clicked) {
+    if (clicked) {
       tutorial = false;
     }
     clicked = false;
-  }
-  else if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
+  } else if (hand.length === maxHand && hand.reduce((a, b) => a + b, 0) === 0) {
     won = true;
     loseScreen();
     clicked = false;
-  }
-  else if(discardedChest) {
+  } else if (discardedChest) {
     won = true;
     loseScreenB();
     clicked = false;
-  }
-  else if(info) {
+  } else if (info) {
     won = true;
     infoScreen();
     clicked = false;
-  }
-  else if(won) {
+  } else if (won) {
     let treasures = 0;
-    for(let i = 0; i < hand.length; i++) {
-      if(hand[i] === CHEST) treasures++;
+    for (let i = 0; i < hand.length; i++) {
+      if (hand[i] === CHEST) treasures++;
     }
-    if(treasures < challenges[currentLevel].deck[CHEST]+1) {
+    if (treasures < challenges[currentLevel].deck[CHEST] + 1) {
       won = false;
     }
 
-    if(won) winScreen();
+    if (won) winScreen();
     clicked = false;
   }
 
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
-      if(currentLevel === 3 && board[y][x].length >= 30) {
+      if (currentLevel === 3 && board[y][x].length >= 30) {
         board[y][x][0] = CHEST;
       }
 
       let stackSize = Math.min(14, board[y][x].length);
-      btn = button(left + (tw + gap) * x, 199-5 + stackSize - (th + gap) * y, tw, th);
+      btn = button(left + (tw + gap) * x, 199 - 5 + stackSize - (th + gap) * y, tw, th);
 
       let thisCard = board[y][x][0];
-      if(nearOctopus(x, y)) thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
+      if (nearOctopus(x, y)) thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
 
-      if(btn) {
+      if (btn) {
         cursorType = 'pointer';
 
         hint(thisCard);
-      }
-      else if(pushing.x === x && pushing.y === y) hint(thisCard);
+      } else if (pushing.x === x && pushing.y === y) hint(thisCard);
 
-      if(stackSize === 0) {
-        drawSprite(BOTTOM, left + (tw + gap) * x, 199-5 - (th + gap) * y);
-        if(btn && clicked && placing !== false) {
+      if (stackSize === 0) {
+        drawSprite(BOTTOM, left + (tw + gap) * x, 199 - 5 - (th + gap) * y);
+        if (btn && clicked && placing !== false) {
           placeCard(x, y, hand[placing], placing);
           clicked = false;
         }
-        if(btn && clicked && pushing && pushing.x - x >= -1 && pushing.x - x <= 1 && pushing.y - y >= -1 && pushing.y - y <= 1) {
+        if (btn && clicked && pushing && pushing.x - x >= -1 && pushing.x - x <= 1 && pushing.y - y >= -1 && pushing.y - y <= 1) {
           placeCard(x, y, pushing.type);
           clicked = false;
         }
         continue;
       }
 
-      drawSprite(BACK, left + (tw + gap) * x, 199-5 - (th + gap) * y);
+      drawSprite(BACK, left + (tw + gap) * x, 199 - 5 - (th + gap) * y);
 
-      drawSprite(board[y][x].length === 1 ? BOTTOM : nearOctopus(x, y) ? INKED : board[y][x][1], left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, board[y][x].length - 1, true);
-      if(pushing.x === x && pushing.y === y && !won) {
-        animating(board[y][x][0], thisCard, left + (tw + gap) * x, 207-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
-      }
-      else if(btn && !won) {
+      drawSprite(board[y][x].length === 1 ? BOTTOM : nearOctopus(x, y) ? INKED : board[y][x][1], left + (tw + gap) * x, 197 - 5 + stackSize - (th + gap) * y, board[y][x].length - 1, true);
+      if (pushing.x === x && pushing.y === y && !won) {
+        animating(thisCard, left + (tw + gap) * x, 207 - 5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+      } else if (btn && !won) {
         //drawSprite(board[y][x].length === 1 ? BOTTOM : thisCard, left + (tw + gap) * x, 197-5 + stackSize - (th + gap) * y, -1, true);
-        animating(board[y][x][0], thisCard, left + (tw + gap) * x, 201-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
-      }
-      else {
-        animating(board[y][x][0], thisCard, left + (tw + gap) * x, 198-5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+        animating(thisCard, left + (tw + gap) * x, 201 - 5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
+      } else {
+        animating(thisCard, left + (tw + gap) * x, 198 - 5 + stackSize - (th + gap) * y, board[y][x].length, checkNeighbors(x, y));
       }
 
-      if(btn && clicked) {
-        if(placing === false && pushing === false) {
+      if (btn && clicked) {
+        if (placing === false && pushing === false) {
           pickupCard(x, y, board[y][x][0]);
-        }
-        else if(pushing) {
+        } else if (pushing) {
           placeCard(x, y, pushing.type);
-        }
-        else {
+        } else {
           placeCard(x, y, hand[placing], placing);
         }
         clicked = false;
@@ -1161,78 +1293,37 @@ function runGame() {
     }
   }
 
-  for(let c = 0; c < 8; c++) {
-    let x = c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2;
+  drawHand(true);
 
-    drawSprite(BOTTOM, x-2, 5-2);
-    drawSprite(BOTTOM, x+2, 5-2);
-    drawSprite(BOTTOM, x-2, 5+2);
-    drawSprite(BOTTOM, x+2, 5+2);
-  }
-
-  for(let c = 0; c < hand.length; c++) {
-    let x = c * (tw + 5) + mid - (tw * 8 + 5 * (8 - 1)) / 2;
-
-    let thisCard = hand[c];
-    if((c > 0 && hand[c-1] === OCTOPUS) || (c < hand.length - 1 && hand[c+1] === OCTOPUS)) {
-      thisCard = thisCard === OCTOPUS ? OCTOPUS : INKED;
-    }
-
-    btn = button(x, 5, tw, th);
-
-    if(btn) {
-      cursorType = 'pointer';
-
-      hint(thisCard);
-    }
-
-    //drawSprite(thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
-    animating(hand[c], thisCard, x, 5 + ((btn && !won) || placing === c ? 2 : 0) + (placing === c ? 6 : 0));
-
-    if(btn && clicked && !won) {
-      if(placing === c) {
-        placing = false;
-        playSound(3);
-      }
-      else activateCard(c, hand[c]);
-      clicked = false;
-    }
-  }
-
-  animate();
-
-  if(placing !== false) {
-    if((placing > 0 && hand[placing-1] === OCTOPUS) || (placing < hand.length - 1 && hand[placing+1] === OCTOPUS)) {
+  if (placing !== false) {
+    if ((placing > 0 && hand[placing - 1] === OCTOPUS) || (placing < hand.length - 1 && hand[placing + 1] === OCTOPUS)) {
       hint(INKED);
-    }
-    else {
+    } else {
       hint(hand[placing]);
     }
   }
 
-  if(hand.length === maxHand && hand.reduce((a,b)=>a+b, 0) === 0) {
+  if (hand.length === maxHand && hand.reduce((a, b) => a + b, 0) === 0) {
     loseScreen();
-  } else if(discardedChest) {
+  } else if (discardedChest) {
     loseScreenB();
-  }
-  else if(info) {
+  } else if (info) {
     infoScreen();
     cursor(cursorType);
     clicked = false;
-  }
-  else if(won) {
+  } else if (won) {
     let treasures = 0;
-    for(let i = 0; i < hand.length; i++) {
-      if(hand[i] === CHEST) treasures++;
+    for (let i = 0; i < hand.length; i++) {
+      if (hand[i] === CHEST) treasures++;
     }
-    if(treasures < challenges[currentLevel].deck[CHEST]+1) {
+    if (treasures < challenges[currentLevel].deck[CHEST] + 1) {
       won = false;
     }
 
-    if(won) winScreen();
+    if (won) winScreen();
   }
 
-  if(tutorial) {
+  if (tutorial) {
     generalSprite(10, 5, 493, -60, 450, 240);
 
     centeredBigText('RULES', 245, 225);
@@ -1258,4 +1349,6 @@ function runGame() {
   cursor(cursorType);
 
   clicked = false;
+
+  if(runAgain) runGame();
 }
