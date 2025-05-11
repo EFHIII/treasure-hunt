@@ -831,7 +831,7 @@ function hardWarning() {
   centeredBigText(`Go to level select?`, 174 + 69, 218);
 
   textButton('No', 240 - 50, 100, (x, y) => {
-    centeredBigText('No', x, y + Math.sin(performance.now() / 200) * 10);
+    centeredBigText('No', x + Math.sin(performance.now() / 200) * 10, y);
 
     if (clicked) {
       currentLevel = 0;
@@ -842,7 +842,7 @@ function hardWarning() {
   });
 
   textButton('Yes', 240 + 50, 100, (x, y) => {
-    centeredBigText('Yes', x, y + Math.sin(performance.now() / 200) * 10);
+    centeredBigText('Yes', x + Math.sin(performance.now() / 200) * 10, y);
 
     if (clicked) {
       clicked = false;
@@ -1080,6 +1080,7 @@ function runGame() {
   }
 
 
+  /*
   if (screen !== 0 && !choose) {
     generalSprite(3, 3, 498 + 34, 20, 25, 20);
 
@@ -1094,7 +1095,19 @@ function runGame() {
       }
     }
   }
+  */
 
+  if (screen !== 0 && !choose) {
+
+    textButton('Exit', 30, 240, (x, y) => {
+      centeredBigText('Exit', x, y);
+      if (clicked) {
+        warningHard = false;
+        screen = screen === 2 ? 0 : 2;
+        clicked = false;
+      }
+    });
+  }
 
   generalSprite(3, 245, 495 - 99, 23, 23, 23);
 
@@ -1207,10 +1220,13 @@ function runGame() {
 
   if (tutorial) {
     won = true;
-    cursorType = 'pointer';
-    if (clicked) {
-      tutorial = false;
-    }
+    textButton('START', 250, 55, (x, y) => {
+      centeredBigText('START', x + Math.sin(performance.now()/200)*10, y);
+      if (clicked) {
+        tutorial = false;
+        clicked = false;
+      }
+    });
     clicked = false;
   } else if (hand.length === maxHand && hand.reduce((a, b) => a + b, 0) === 0) {
     won = true;
@@ -1324,13 +1340,13 @@ function runGame() {
   }
 
   if (tutorial) {
-    generalSprite(10, 5, 493, -60, 450, 240);
+    generalSprite(10, 5, 493, -60, 450, 250);
 
-    centeredBigText('RULES', 245, 225);
+    centeredBigText('RULES', 250, 225);
 
     centeredBigText('Goal', 225, 195);
 
-    centeredText('Find the treasure\ncard by digging\nthrough these\npiles of sand', 250, 105);
+    centeredText('Find the treasure\ncard by digging\nthrough these\npiles of sand', 250, 115);
 
     centeredText('Click cards to\npick them up\nand add them\nto your hand', 120, 190);
 
@@ -1344,6 +1360,12 @@ function runGame() {
     centeredText('Click cards in your\nhand to use them\nYou cannot\nuse sand', 388, 185);
 
     centeredText('When using certain\ncards, select a card\npile to use it on', 388, 65);
+
+    cursorType = 'default';
+
+    textButton('START', 250, 55, (x, y) => {
+      centeredBigText('START', x + Math.sin(performance.now()/200)*10, y);
+    });
   }
 
   cursor(cursorType);
