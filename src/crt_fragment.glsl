@@ -21,13 +21,13 @@ vec4 renderBoxAA(vec2 fragCoord) {
   if (outAspect > srcAspect) {
     contentSize.y = u_resolution.y;
     contentSize.x = contentSize.y * srcAspect;
-    offset.x = (u_resolution.x - contentSize.x) * 0.5;
-    offset.y = 0.0;
+    offset.x = (u_resolution.x - contentSize.x) * 0.5 + 0.5;
+    offset.y = 0.5;
   } else {
     contentSize.x = u_resolution.x;
     contentSize.y = contentSize.x / srcAspect;
-    offset.x = 0.0;
-    offset.y = (u_resolution.y - contentSize.y) * 0.5;
+    offset.x = 0.5;
+    offset.y = (u_resolution.y - contentSize.y) * 0.5 + 0.5;
   }
 
   // If outside 16:9 content, output black (letterbox)
@@ -155,7 +155,7 @@ vec4 renderCRT(vec2 fragCoord) {
   int x = 0;
   int y = 0;
 
-  vec2 main_tx = vec2((poff + mod(onPixel.x , float(sz))) / spritesheetSize.x, (float(sz) + 0.5 + mod(onPixel.y, float(sz))) / spritesheetSize.y);
+  vec2 main_tx = vec2((poff + mod(onPixel.x , float(sz))) / spritesheetSize.x, (float(sz) + mod(onPixel.y, float(sz))) / spritesheetSize.y);
 
   for(int x = -1; x < 2; ++x) {
     for(int y = -1; y < 2; ++y) {
