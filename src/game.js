@@ -53,14 +53,14 @@ const challenges = [
     title: 'House of Gold',
     name: 'Gold',
     desc: `callect all\n8 treasures!`,
-    deck: [56, 18, 0, 8, 12, 4, 4, 14, 7, 6, 6, 2, 6],
+    deck: [56, 18, 0, 8, 12, 4, 3, 14, 7, 6, 6, 2, 6],
     lock: 1
   },
   {
     title: 'Infinite Abyss',
     name: 'Abyss',
     desc: `Collect all\n 8 treasures!\nImpossibly hard!`,
-    deck: [511, 150, 0, 66, 101, 33, 34, 115, 7, 50, 50, 20, 50],
+    deck: [511, 150, 0, 66, 101, 33, 33, 115, 7, 50, 50, 20, 50],
     lock: 1
   }
 ];
@@ -148,14 +148,13 @@ function isTool(id) {
   }
 }
 
-function hasConsecutiveEmpty(cards, chest) {
+function hasConsecutiveEmpty(cards) {
   let lastEmpty = false;
   let at = 0;
   for (let l = 0; l < layers; l++) {
     let empty = true;
     for (let i = 0; i < gridWidth * gridHeight; i++) {
       at++;
-      if (at === chest) at++;
 
       if (isTool(cards[at])) empty = false;
     }
@@ -190,14 +189,20 @@ function setupGame() {
     console.log(`error: only ${cards.length} of ${layers * gridWidth * gridHeight-1} cards`);
   }
 
-  let fair = false,
-    chest;
+  let fair = false;
   while (!fair) {
     while (!fair) {
       shuffle(cards);
-      chest = Math.random() * cards.length / 4;
-      if (currentLevel === 3) chest = Infinity;
-      fair = !hasConsecutiveEmpty(cards, chest) && hasTopTools(cards, TOP_TOOLS);
+
+      if(currentLevel === 6 || currentLevel === 7) {
+        cards.splice(Math.floor(Math.random() * 12), 0, BUCKET);
+      }
+
+      if(currentLevel !== 3) {
+        cards.splice(Math.floor(Math.random() * cards.length / 4), 0, CHEST);
+      }
+
+      fair = !hasConsecutiveEmpty(cards) && hasTopTools(cards, TOP_TOOLS);
       let at = 0;
       for (let i = 0; i < layers; i++) {
         for (let y = 0; y < gridWidth * gridHeight; y++) {
@@ -222,10 +227,7 @@ function setupGame() {
     for (let l = 0; l < layers; l++) {
       for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
-          if (at >= chest) {
-            board[y][x].push(CHEST);
-            chest = Infinity;
-          } else board[y][x].push(cards[at++]);
+          board[y][x].push(cards[at++]);
 
           if (l === layers - 1) {
             board[y][x].reverse();
@@ -425,7 +427,7 @@ function placeCard(x, y, type, c) {
         y,
         choices: board[y][x].splice(0, 4)
       };
-      for (let i = 0; i < choose.choices.length; i++) {
+      for (let i = choose.choices.length - 1; i >= 0; i--) {
         let len = choose.choices.length;
         let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
         let val = choose.choices[i];
@@ -448,7 +450,7 @@ function placeCard(x, y, type, c) {
         y,
         choices: board[y][x].splice(0, 2)
       };
-      for (let i = 0; i < choose.choices.length; i++) {
+      for (let i = choose.choices.length - 1; i >= 0; i--) {
         let len = choose.choices.length;
         let x = i * (tw + gap) + mid - (tw * len + gap * (len - 1)) / 2;
         let val = choose.choices[i];
@@ -481,7 +483,7 @@ function placeCard(x, y, type, c) {
       });
       break;
     case DETECTOR:
-      playSound(5);
+      playSound(8);
 
       animateMove(type, h.x, h.y, g.x, g.y);
 
@@ -1099,7 +1101,7 @@ function runGame() {
 
   if (screen !== 0 && !choose) {
 
-    textButton('Exit', 30, 240, (x, y) => {
+    textButton('Exit', 30, 243, (x, y) => {
       centeredBigText('Exit', x, y);
       if (clicked) {
         warningHard = false;

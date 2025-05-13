@@ -30,6 +30,10 @@ let winSound = new Howl({
   src: ['assets/win.ogg']
 });
 
+let beepSound = new Howl({
+  src: ['assets/beep.ogg']
+});
+
 let playSound = true;
 
 let sounds = [
@@ -40,7 +44,8 @@ let sounds = [
   cardUpSound,
   cardPlaySound,
   chestDwonSound,
-  winSound
+  winSound,
+  beepSound
 ]
 
 function toggleSound() {
