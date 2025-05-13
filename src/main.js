@@ -1,6 +1,6 @@
 let offscreenCanvas = document.getElementById('canvas');
-offscreenCanvas.width = window.innerWidth;
-offscreenCanvas.height = window.innerHeight;
+offscreenCanvas.width = window.innerWidth * window.devicePixelRatio;
+offscreenCanvas.height = window.innerHeight * window.devicePixelRatio;
 
 offscreenCanvas = offscreenCanvas.transferControlToOffscreen();
 let renderThread = new Worker('src/renderWorker.js');
@@ -10,12 +10,12 @@ renderThread.postMessage({
 }, [offscreenCanvas]);
 
 renderThread.onmessage = msg => {
-  switch(msg.data.type) {
+  switch (msg.data.type) {
     case 'cursor':
       document.body.style.cursor = msg.data.style;
       break;
     case 'sound':
-      if(msg.data.sound < 0) {
+      if (msg.data.sound < 0) {
         toggleSound();
         return;
       }
@@ -35,8 +35,8 @@ renderThread.onmessage = msg => {
 window.onresize = () => {
   renderThread.postMessage({
     type: 'resize',
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: window.innerWidth * window.devicePixelRatio,
+    height: window.innerHeight * window.devicePixelRatio
   });
 }
 
@@ -44,8 +44,8 @@ window.onresize = () => {
 onmousemove = e => {
   renderThread.postMessage({
     type: 'mouseMove',
-    x: e.x,
-    y: e.y
+    x: e.x * window.devicePixelRatio,
+    y: e.y * window.devicePixelRatio
   });
 }
 
@@ -62,13 +62,15 @@ function isMobile() {
     return window.matchMedia(query).matches;
   }
 
-  if(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch) {
+  if (('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch) {
     return true;
   }
   let query = ['(', prefixes.join('touch-enabled),('), 'heartz', ')'].join('');
   return mq(query);
 }
 
-if(isMobile()) {
-  renderThread.postMessage({type: 'mobile'});
+if (isMobile()) {
+  renderThread.postMessage({
+    type: 'mobile'
+  });
 }
