@@ -292,6 +292,9 @@ onmessage = function(msg) {
   const data = msg.data;
 
   switch(data.type) {
+    case 'mobile':
+      shader = false;
+      break;
     case 'mouseMove':
       if(shader) {
         mouse.x =  data.x / sz - canvas.width  / 2 / sz + vWidth  / 2;

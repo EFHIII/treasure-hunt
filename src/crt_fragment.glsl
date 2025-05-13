@@ -10,6 +10,70 @@ uniform int sz;
 
 out vec4 fragColor;
 
+vec4 renderBoxAA(vec2 fragCoord) {
+    // Fixed source resolution and aspect
+    vec2  srcRes    = vec2(480.0, 270.0);
+    float srcAspect = srcRes.x / srcRes.y;
+    float outAspect = u_resolution.x / u_resolution.y;
+    // Compute letterboxed content size and offset (16:9 fit)
+    vec2 contentSize, offset;
+    if (outAspect > srcAspect) {
+        contentSize.y = u_resolution.y;
+        contentSize.x = contentSize.y * srcAspect;
+        offset.x      = (u_resolution.x - contentSize.x) * 0.5;
+        offset.y      = 0.0;
+    } else {
+        contentSize.x = u_resolution.x;
+        contentSize.y = contentSize.x / srcAspect;
+        offset.x      = 0.0;
+        offset.y      = (u_resolution.y - contentSize.y) * 0.5;
+    }
+    // If outside 16:9 content, output black (letterbox)
+    if (fragCoord.x < offset.x || fragCoord.x >= offset.x + contentSize.x ||
+        fragCoord.y < offset.y || fragCoord.y >= offset.y + contentSize.y) {
+        return vec4(0.0, 0.0, 0.0, 1.0);
+    }
+    // Map fragment to source-space rectangle [sx0,sx1]x[sy0,sy1]
+    vec2 local = fragCoord - offset;
+    float scale = contentSize.x / srcRes.x;  // content-to-source scale (same for y)
+    float sx0 = local.x / scale;
+    float sy0 = local.y / scale;
+    float sx1 = (local.x + 1.0) / scale;
+    float sy1 = (local.y + 1.0) / scale;
+    // Accumulate weighted color
+    vec4 accumColor = vec4(0.0);
+    float totalArea = 0.0;
+    // Determine integer range of overlapping source pixels
+    int iMin = int(floor(sx0));
+    int iMax = int(ceil(sx1) - 1.0);
+    int jMin = int(floor(sy0));
+    int jMax = int(ceil(sy1) - 1.0);
+    // Clamp to valid texel indices
+    iMin = clamp(iMin, 0, int(srcRes.x) - 1);
+    iMax = clamp(iMax, 0, int(srcRes.x) - 1);
+    jMin = clamp(jMin, 0, int(srcRes.y) - 1);
+    jMax = clamp(jMax, 0, int(srcRes.y) - 1);
+    // Loop over overlapping source texels
+    for(int i = iMin; i <= iMax; ++i) {
+        float overlapX = min(sx1, float(i+1)) - max(sx0, float(i));
+        if (overlapX <= 0.0) continue;
+        for(int j = jMin; j <= jMax; ++j) {
+            float overlapY = min(sy1, float(j+1)) - max(sy0, float(j));
+            if (overlapY <= 0.0) continue;
+            float area = overlapX * overlapY;
+            vec4 srcColor = texelFetch(u_scene, ivec2(i, j), 0);
+            accumColor   += srcColor * area;
+            totalArea    += area;
+        }
+    }
+    // Normalize by total covered area (should be (1/scale^2) in theory)
+    if (totalArea > 0.0) {
+        accumColor /= totalArea;
+    }
+    return accumColor;
+}
+
+
 vec4 renderNormal(vec2 fragCoord) {
   vec2 uv = fragCoord / u_resolution;
   float targetAspect = 16.0 / 9.0;
@@ -111,6 +175,6 @@ void main() {
   if (shader != 0) {
     fragColor = renderCRT(fragCoord);
   } else {
-    fragColor = renderNormal(fragCoord);
+    fragColor = renderBoxAA(fragCoord);
   }
 }
