@@ -52,7 +52,7 @@ const challenges = [
   {
     title: 'House of Gold',
     name: 'Gold',
-    desc: `callect all\n8 treasures!`,
+    desc: `collect all\n8 treasures!`,
     deck: [56, 18, 0, 8, 12, 4, 3, 14, 7, 6, 6, 2, 6],
     lock: 1
   },
