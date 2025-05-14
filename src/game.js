@@ -192,6 +192,7 @@ function setupGame() {
   let fair = false;
   while (!fair) {
     while (!fair) {
+      cards = deck.slice();
       shuffle(cards);
 
       if(currentLevel === 6 || currentLevel === 7) {
