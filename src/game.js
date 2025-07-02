@@ -596,9 +596,19 @@ function chooseChoice(choice, type) {
       }
 
       if (choose.choices[choice] === CHEST) {
+        // check for possible loss
+        for (let i = 0; i < choose.choices.length; i++) {
+          if (i === choice) continue;
+          if (choose.choices[i] === CHEST && /* Tower special case */ currentLevel !== 3) {
+            playSound(5);
+            discardedChest = true;
+          }
+        }
         // WIN condition
-        won = true;
-        playSound(7);
+        if(!discardedChest) {
+          won = true;
+          playSound(7);
+        }
       } else {
         playSound(5);
         for (let i = 0; i < choose.choices.length; i++) {
